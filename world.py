@@ -8,6 +8,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="DRO_SSM")
     # Learning   adv_lr  eta_epochs  warm_up_epochs alpha beta  clip_grad_norm reg_weight noise_ratio  learning_mode
 
+    parser.add_argument("--diff_margin_and_topk", action="store_true")
     parser.add_argument("--lambda_k", type=int, default=10, help='The topk chosen')
 
     parser.add_argument("--shift_mode",type=str,default='others',help='shift mode')
@@ -149,7 +150,10 @@ config = {
 
 
     "sample_noise": args.sample_noise,
-    "sample_method": args.sample_method
+    "sample_method": args.sample_method,
+
+
+    "diff_margin_and_topk": args.diff_margin_and_topk
 
 
 }

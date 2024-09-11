@@ -234,6 +234,23 @@ class BasicModel(nn.Module):
 
 
 
+    def diff_margin_and_topk(self, users):
+        user_embedding, item_embedding = self.compute()
+
+        user_margin = self.margin_vector[users.long()]
+
+        users_emb = user_embedding[users.long()]
+        items_emb = item_embedding
+
+        scores = torch.matmul(users_emb, items_emb.t())
+        topk_scores, topk_indices = torch.topk(input = scores, dim = 1, k = self.dynamic_t)
+
+        loss = torch.abs(user_margin.squeeze() - topk_scores[:,-1]).sum()
+
+        return loss
+
+
+
 
     def compute_topk_loss(self,y_pred, margin_vec, lambda_t):
         """ Margin Search Part """

@@ -50,7 +50,7 @@ def train_double_epoch(dataset: dataloader.Loader, recommend_model, loss_class, 
         batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
         batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
 
-        cri = loss.precision_step(batch_users, batch_pos, batch_neg, epoch, batch_id, flag)
+        cri = loss.precision_step(batch_users, batch_pos, batch_neg, epoch, batch_id)
         w.add_scalar("Loss", cri, iter_num + batch_id)
         aver_loss += cri
         # iter_num += 1
@@ -65,6 +65,19 @@ def train_double_epoch(dataset: dataloader.Loader, recommend_model, loss_class, 
 
     aver_loss = aver_loss / total_batch
     # w.add_scalar("Loss", aver_loss, epoch)
+
+    aver_diff_loss = 0
+    if config["diff_margin_and_topk"]:
+        with torch.no_grad():
+            for batch_id, batch_users in enumerate(utils.minibatch( torch.arange(0, dataset.n_users) , batch_size=batch_size) ):
+                cri = loss.check_diff_margin_and_topk(batch_users)
+                aver_diff_loss += cri
+                w.add_scalar("diff_margin_topk", cri, iter_num + batch_id)
+
+    # aver_diff_loss = aver_diff_loss / dataset.n_users
+
+
+
 
 
 

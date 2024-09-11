@@ -7,6 +7,7 @@ from torch import log
 from time import time
 from sklearn.metrics import roc_auc_score
 import os
+import numpy as np
 
 from torch.nn.utils.clip_grad import clip_grad_norm_
 
@@ -54,6 +55,10 @@ class LossFunc:
 
         self.dataset = dataset
 
+    def check_diff_margin_and_topk(self, users) -> float:
+        loss =  self.model.diff_margin_and_topk(users) / users.shape[0]
+        return loss.cpu().item()
+
     def quantile_setp(self, users, user_pos, neg, epoch: int = None, batch_idx: int = None):
         loss = self.model.quantile_loss(users, user_pos, neg)
 
@@ -61,7 +66,17 @@ class LossFunc:
         loss.backward()
         self.opt_quant.step()
 
-    def precision_step(self,users, pos, neg, epoch: int = None, batch_id: int = None, flag: bool = True):
+    def precision_step(self,users, pos, neg, epoch: int = None, batch_id: int = None) -> float:
+        """
+
+        Args:
+            users: users in (u,i) interactions of a batch
+            pos:   positive items in (u,i) interactions of a batch
+            neg:   negative items sampled for user u
+
+        Returns:
+            float: The return value. The average loss value
+        """
         quantile_loss,emb_loss = self.model.precision_topk_loss(users,pos,neg,epoch,batch_id)
         loss = quantile_loss + emb_loss
 
