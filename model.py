@@ -132,8 +132,10 @@ class BasicModel(nn.Module):
 
 
     """ Double Epoch Loss Update Strategies """
-    def compute_quantile_loss(self, pos_scores, neg_scores, margin_vec):
-        pos_check_tensor = (pos_scores != 0)
+    def compute_quantile_loss(self, user_pos, pos_scores, neg_scores, margin_vec):
+
+        pos_check_tensor = torch.not_equal(user_pos, torch.full_like(user_pos, self.num_items).to(torch.int64))
+        # pos_check_tensor = (pos_scores != 0)
         pos_checksum = (torch.sum(pos_check_tensor, dim = 1) + neg_scores.shape[1]).to(torch.float32)
 
         lambda_t = self.dynamic_t / pos_checksum
@@ -163,7 +165,7 @@ class BasicModel(nn.Module):
 
         margin_vec = self.margin_vector[users.long()]
 
-        loss = self.compute_quantile_loss(pos_scores, neg_scores, margin_vec)
+        loss = self.compute_quantile_loss(user_pos, pos_scores, neg_scores, margin_vec)
 
         return loss
 

@@ -59,7 +59,7 @@ def train_double_epoch(dataset: dataloader.Loader, recommend_model, loss_class, 
         batch_user_pos = user_pos_items[batch_users]
 
         batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
-        batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
+        batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_quantile_negative_items"], replacement=True)
 
         loss.quantile_setp(users = batch_users, user_pos=batch_user_pos, neg = batch_neg)
 
