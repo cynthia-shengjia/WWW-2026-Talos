@@ -76,14 +76,66 @@ def train_double_epoch(dataset: dataloader.Loader, recommend_model, loss_class, 
 
     # aver_diff_loss = aver_diff_loss / dataset.n_users
 
+    time_one_epoch = int(time.time() - start)
+    return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
+
+def train_double_batch_epoch(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, flag = True):
+    Recmodel = recommend_model
+    Recmodel.train()
+    loss: utils.LossFunc = loss_class
+
+    start = time.time()
+
+    # minibatch data load
+    users, posItems = dataset.trainUser_tensor, dataset.trainItem_tensor
+    users, posItems = utils.shuffle(users, posItems)
+
+    user_pos_items = dataset.user_pos_items
+
+    # minibatch data training
+    batch_size = config["train_batch"]
+    total_batch = len(users) // batch_size + 1
+    aver_loss = 0.0
+
+    # 1. the padding positive items
+    # 2. the users arrange to make minibatch run
+
+    iter_num = epoch * total_batch
+    for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
+        batch_users = batch_users.cuda(non_blocking=True)
+        batch_pos = batch_pos.cuda(non_blocking=True)
 
 
+        batch_user_pos = user_pos_items[batch_users]
 
+        batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
+        batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
+        batch_quantile_neg = torch.multinomial(batch_not_interaction_tensor, config["num_quantile_negative_items"], replacement=True)
 
+        loss.quantile_setp(users = batch_users, user_pos=batch_user_pos, neg = batch_neg)
+        cri = loss.precision_step(batch_users, batch_pos, batch_neg, epoch, batch_id)
+        w.add_scalar("Loss", cri, iter_num + batch_id)
+        aver_loss += cri
+        # iter_num += 1     
+        
 
+    aver_loss = aver_loss / total_batch
+    # w.add_scalar("Loss", aver_loss, epoch)
+
+    aver_diff_loss = 0
+    if config["diff_margin_and_topk"]:
+        with torch.no_grad():
+            for batch_id, batch_users in enumerate(utils.minibatch( torch.arange(0, dataset.n_users) , batch_size=batch_size) ):
+                cri = loss.check_diff_margin_and_topk(batch_users)
+                aver_diff_loss += cri
+                w.add_scalar("diff_margin_topk", cri, iter_num + batch_id)
+
+    # aver_diff_loss = aver_diff_loss / dataset.n_users
 
     time_one_epoch = int(time.time() - start)
     return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
+
+
 
 def Train_original(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, flag = True):
     Recmodel = recommend_model
