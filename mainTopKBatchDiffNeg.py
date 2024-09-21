@@ -157,7 +157,7 @@ for epoch in range(world.TRAIN_epochs):
             )
         print(valid_res)
 
-    output_information = procedure.train_double_batch_epoch(dataset, Recmodel, loss_func, epoch, world.config, w=w, device=device,seed = world.seed)
+    output_information = procedure.train_double_batch_epoch_diff_neg(dataset, Recmodel, loss_func, epoch, world.config, w=w, device=device,seed = world.seed)
     print(f"EPOCH[{epoch+1}/{world.TRAIN_epochs}] {output_information}")
 
 
