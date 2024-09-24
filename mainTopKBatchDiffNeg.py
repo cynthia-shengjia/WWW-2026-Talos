@@ -113,7 +113,7 @@ for epoch in range(world.TRAIN_epochs):
     start = time.time()
     if epoch % 5 == 0 and epoch != 0:
         
-        valid_res = procedure.Valid(dataset, Recmodel, epoch, None, world.config["multicore"])
+        valid_res = procedure.Valid(dataset, Recmodel, epoch, w, world.config["multicore"])
 
         procedure.Test(dataset, Recmodel, epoch, w, world.config["multicore"])
 

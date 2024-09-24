@@ -33,13 +33,9 @@ class Loader(Dataset):
         self.m_item = 0
         self.config = config
 
-        self.path = path
-        self.shift_mode = config['shift_mode']
-        
-        
+        self.path = path        
         self.read_data(path)
-        if config['shift_mode'] == 'exposure':
-            self.read_ori_test_data(path)
+
 
         self.m_item += 1
         self.n_user += 1
@@ -59,13 +55,6 @@ class Loader(Dataset):
         self.UserItemNet = csr_matrix(
             (np.ones(len(self.trainUser)), (self.trainUser, self.trainItem)), shape=(self.n_user, self.m_item)
         )
-
-        if config['shift_mode'] == 'exposure':
-            self.OriTestUserItemNet = csr_matrix(
-                (np.ones(len(self.in_test_user)), (self.in_test_user, self.in_test_item)), shape=(self.n_user, self.m_item)
-            )
-
-
 
 
 
@@ -178,31 +167,6 @@ class Loader(Dataset):
             else:
                 valid_data[user] = [item]
         return valid_data
-
-    def read_ori_test_data(self,path):
-        test_positive_negative_file = path + '/ori_test.txt'
-
-        positive_negative_test_user, positive_negative_test_item = [],[]
-
-        with open(test_positive_negative_file) as f:
-            for l in f.readlines():
-                if len(l) > 0:
-                    l = l.strip("\n").split()  # l.strip('\n').split(' ')
-                    items = [int(i) for i in l[1:]]
-                    if len(items) == 0:
-                        continue
-                    uid = int(l[0])
-                    positive_negative_test_user.extend([uid] * len(items))
-                    positive_negative_test_item.extend(items)
-        
-        self.in_test_item = np.array(positive_negative_test_item)
-        self.in_test_user = np.array(positive_negative_test_user)
-
-        self.m_item = max(self.m_item, max(positive_negative_test_item))
-        self.n_user = max(self.n_user, max(positive_negative_test_user))
-
-
-
 
     def read_data(self, path):
         train_file = path + "/train_data.txt"
@@ -433,12 +397,6 @@ class Loader(Dataset):
             posItems.append(self.UserItemNet[user].nonzero()[1])
         return posItems
     
-    def getTestSeries(self,users):
-        test_series = []
-        if self.shift_mode == 'exposure':
-            for user in users:
-                test_series.append(self.OriTestUserItemNet[user].nonzero()[1])
-        return test_series
     
     # 下面是给LightGCL使用的函数
     def read_txt2coo(self):
