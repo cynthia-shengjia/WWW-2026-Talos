@@ -232,7 +232,6 @@ def Train_original(dataset: dataloader.Loader, recommend_model, loss_class, epoc
 
             batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
             batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
-            
             cri = loss.step(batch_users, batch_pos, batch_neg, epoch, batch_id, flag)
             w.add_scalar("Loss", cri, iter_num + batch_id)
             aver_loss += cri
@@ -302,6 +301,25 @@ def Train_noise_original(dataset: dataloader.Loader, recommend_model, loss_class
     time_one_epoch = int(time.time() - start)
     return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
 
+
+def valid_one_batch(X):
+    sorted_items = X[0].numpy()
+    groundTrue = X[1]
+    r = utils.getLabel(groundTrue, sorted_items)  # 一个包含batch个元素的list，每个元素是一个np数组
+    pre, recall, ndcg, hitratio = [], [], [], []
+    for k in world.valid_topks:
+        ret = utils.RecallPrecision_ATk(groundTrue, r, k)
+        pre.append(ret["precision"])
+        recall.append(ret["recall"])
+        ndcg.append(utils.NDCGatK_r(groundTrue, r, k))
+        hitratio.append(utils.HitRatio(r))
+    return {
+        "recall": np.array(recall),
+        "precision": np.array(pre),
+        "ndcg": np.array(ndcg),
+        "hitratio": np.array(hitratio),
+    }
+    
 def test_one_batch(X):
     sorted_items = X[0].numpy()
     groundTrue = X[1]
@@ -406,15 +424,15 @@ def Valid(dataset, Recmodel, epoch, w=None, multicore=0):
     # Recmodel: model.LightGCN
 
     Recmodel = Recmodel.eval()
-    max_K = max(world.topks)
+    max_K = max(world.valid_topks)
 
     if multicore == 1:
         pool = multiprocessing.Pool(CORES)
     results = {
-        "precision": np.zeros(len(world.topks)),
-        "recall": np.zeros(len(world.topks)),
-        "ndcg": np.zeros(len(world.topks)),
-        "hitratio": np.zeros(len(world.topks)),
+        "precision": np.zeros(len(world.valid_topks)),
+        "recall": np.zeros(len(world.valid_topks)),
+        "ndcg": np.zeros(len(world.valid_topks)),
+        "hitratio": np.zeros(len(world.valid_topks)),
     }
 
     with torch.no_grad():
@@ -449,11 +467,11 @@ def Valid(dataset, Recmodel, epoch, w=None, multicore=0):
 
         X = zip(rating_list, groundTrue_list)
         if multicore == 1:
-            pre_results = pool.map(test_one_batch, X)
+            pre_results = pool.map(valid_one_batch, X)
         else:
             pre_results = []
             for x in X:
-                pre_results.append(test_one_batch(x))
+                pre_results.append(valid_one_batch(x))
 
         for result in pre_results:
             results["recall"] += result["recall"]
@@ -465,11 +483,11 @@ def Valid(dataset, Recmodel, epoch, w=None, multicore=0):
         results["ndcg"] /= float(len(users))
         results["hitratio"] /= float(dataset.validDataSize)
 
-        # for i in range(len(world.topks)):
-        #     w.add_scalar(f"Test/Recall_{world.topks[i]}", results["recall"][i], epoch)
-        #     w.add_scalar(f"Test/Precision_{world.topks[i]}", results["precision"][i], epoch)
-        #     w.add_scalar(f"Test/NDCG_{world.topks[i]}", results["ndcg"][i], epoch)
-        #     w.add_scalar(f"Test/HitRatio_{world.topks[i]}", results["hitratio"][i], epoch)
+        for i in range(len(world.valid_topks)):
+            w.add_scalar(f"Valid/Recall_{world.valid_topks[i]}", results["recall"][i], epoch)
+            w.add_scalar(f"Valid/Precision_{world.valid_topks[i]}", results["precision"][i], epoch)
+            w.add_scalar(f"Valid/NDCG_{world.valid_topks[i]}", results["ndcg"][i], epoch)
+            w.add_scalar(f"Valid/HitRatio_{world.valid_topks[i]}", results["hitratio"][i], epoch)
         if multicore == 1:
             pool.close()
 

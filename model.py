@@ -263,7 +263,6 @@ class BasicModel(nn.Module):
     """Softmax Loss"""
     def compute_ssm_loss(self, y_pred,user):
         """The softmax loss"""
-
         """ The following are original codes """
         if self.config['mode'] == 'reweight':
             pos_logits = torch.exp(y_pred[:, 0] / self.config["ssm_temp"])
@@ -593,10 +592,7 @@ class LightGCN(BasicModel):
         self.weight_decay = self.config["weight_decay"]
         self.sample_mode = self.config["sample_mode"]
 
-        # if self.config['loss'] == 'llpauc':
-        #     self.embedding_user = nn.init.normal_(torch.empty(self.num_users,self.latent_dim), mean=0,std=0.01)
-        #     self.embedding_item = nn.init.normal_(torch.empty(self.num_items,self.latent_dim), mean=0,std=0.01)
-        # else:
+
         self.embedding_user = nn.init.xavier_uniform_(torch.empty(self.num_users,self.latent_dim))
         self.embedding_item = nn.init.xavier_uniform_(torch.empty(self.num_items,self.latent_dim))
 
@@ -604,23 +600,7 @@ class LightGCN(BasicModel):
         self.embedding_item = nn.Parameter(self.embedding_item)
 
 
-        # self.embedding_user = nn.Embedding(self.num_users, self.latent_dim)
-        # self.embedding_item = nn.Embedding(self.num_items, self.latent_dim)
-
-        # nn.init.xavier_normal_(self.embedding_user.weight)
-        # nn.init.xavier_normal_(self.embedding_item.weight)
-         
-
-        
-        # self.embedding_user = torch.nn.Embedding(num_embeddings=self.num_users, embedding_dim=self.latent_dim)
-        # self.embedding_item = torch.nn.Embedding(num_embeddings=self.num_items, embedding_dim=self.latent_dim)
-
-        # nn.init.xavier_uniform_(self.embedding_user.weight)
-        # nn.init.xavier_uniform_(self.embedding_item.weight)
-
-        # nn.init.normal_(self.embedding_user.weight, std=0.1)
-        # nn.init.normal_(self.embedding_item.weight, std=0.1)
-        world.cprint("use NORMAL distribution initilizer")
+        world.cprint("use UNIFORMAL distribution initilizer")
 
         self.f = nn.Sigmoid()
         self.Graph = self.dataset.Graph

@@ -64,7 +64,6 @@ class Loader(Dataset):
         self.items_D[self.items_D == 0.0] = 1.0
         # pre-calculate
         self._allPos = self.getUserPosItems(list(range(self.n_user)))
-        self._testSeries = self.getTestSeries(list(range(self.n_user)))
         self.__testDict = self.__build_test()  # 字典testDict[uid] = [pos_iid1, pos_iid2, ...]
         self.__validDict = self.__build_valid()
 

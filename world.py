@@ -7,6 +7,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="DRO_SSM")
     # Learning   adv_lr  eta_epochs  warm_up_epochs alpha beta  clip_grad_norm reg_weight noise_ratio  learning_mode
+    parser.add_argument("--valid_topks", nargs="?", default="[20]", help="@k test list")
 
     parser.add_argument("--num_quantile_negative_items", type = int)
 
@@ -168,6 +169,7 @@ model_name = args.model
 
 TRAIN_epochs = args.epochs
 topks = eval(args.topks)
+valid_topks = eval(args.valid_topks)
 # tensorboard = args.tensorboard
 comment = args.comment
 

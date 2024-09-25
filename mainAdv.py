@@ -29,13 +29,11 @@ else:
     optimized_params = nni.get_next_parameter()
     world.config.update(optimized_params)
 
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 # ==============================
 utils.set_seed(world.seed)
 print(">>SEED:", world.seed)
 # ==============================
+
 
 file_path = os.path.join("./normal_data",world.config["datapath"])
 dataroot = os.path.join(file_path, world.config["dataset"])
@@ -52,11 +50,12 @@ MODELS = {
 }
 
 Recmodel = MODELS[world.model_name](world.config, dataset).cuda()
+best_Recmodel = MODELS[world.model_name](world.config, dataset).cuda()
 loss_func = utils.LossFunc(Recmodel, world.config, dataset)
 
 # world.config['ssm_temp2'] = world.config['ssm_temp']
 
-if world.config["loss"] == "bpr" or world.config["loss"] == "bce" or world.config["loss"] == "rmse":
+if world.config["loss"] == "bpr" or world.config["loss"] == "bce":
     world.config["norm_emb"] = 0
     world.config["num_negtive_items"] = 1
 
@@ -106,13 +105,14 @@ best_recall, best_ndcg, best_hit, best_precision = (
 )
 patience = 0
 start_total = time.time()
+current_eta = 0
 
-best_Recmodel = MODELS[world.model_name](world.config, dataset).cuda()
+
 
 for epoch in range(world.TRAIN_epochs):
     start = time.time()
+
     if epoch % 5 == 0 and epoch != 0:
-        
         valid_res = procedure.Valid(dataset, Recmodel, epoch, w, world.config["multicore"])
         valid_recall, valid_ndcg, valid_hit, valid_precision = (
             valid_res["recall"],
@@ -133,7 +133,6 @@ for epoch in range(world.TRAIN_epochs):
             patience = 0
             if "NNI_PLATFORM" not in os.environ:
                 torch.save(Recmodel.state_dict(), os.path.join(save_dir, "best_model.pth"))
-            # best_Recmodel = Recmodel
             best_Recmodel.load_state_dict(Recmodel.state_dict())
         else:
             patience += 1
@@ -145,7 +144,7 @@ for epoch in range(world.TRAIN_epochs):
                 print(test_res)
                 break
 
-        for i in range(len(world.valid_topks)):
+        for i in range(len(world.topks)):
             best_recall[i], best_ndcg[i], best_hit[i], best_precision[i] = (
                 max(best_recall[i], valid_recall[i]),
                 max(best_ndcg[i], valid_ndcg[i]),
@@ -153,8 +152,15 @@ for epoch in range(world.TRAIN_epochs):
                 max(best_precision[i], valid_precision[i]),
             )
         print(valid_res)
+    
+    if (epoch + 3) % world.config['adv_interval'] == 0 and current_eta < world.config['eta_epochs'] and epoch > world.config['warm_up_epochs']:
+        Recmodel.freeze_prob(False)
+        cprint('advTrain')
+        output_information_adv = procedure.Train_original(dataset, Recmodel, loss_func, epoch, world.config, w=w, flag = False)
+        current_eta += 1
 
-    output_information = procedure.train_double_batch_epoch_diff_neg(dataset, Recmodel, loss_func, epoch, world.config, w=w, device=device,seed = world.seed)
+    Recmodel.freeze_prob(True)
+    output_information = procedure.Train_original(dataset, Recmodel, loss_func, epoch, world.config, w=w, flag = True)
     print(f"EPOCH[{epoch+1}/{world.TRAIN_epochs}] {output_information}")
 
 
