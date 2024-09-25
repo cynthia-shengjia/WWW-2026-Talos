@@ -33,6 +33,7 @@ else:
 utils.set_seed(world.seed)
 print(">>SEED:", world.seed)
 # ==============================
+cprint("ValidTopks"+str(world.valid_topks))
 
 file_path = os.path.join("./normal_data",world.config["datapath"])
 dataroot = os.path.join(file_path, world.config["dataset"])

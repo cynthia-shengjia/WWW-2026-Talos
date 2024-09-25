@@ -37,6 +37,8 @@ utils.set_seed(world.seed)
 print(">>SEED:", world.seed)
 # ==============================
 
+cprint("The valid mrtric is ValidTopks"+str(world.valid_topks))
+
 file_path = os.path.join("./normal_data",world.config["datapath"])
 dataroot = os.path.join(file_path, world.config["dataset"])
 logroot = os.path.join("./log", world.config["dataset"])

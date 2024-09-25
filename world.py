@@ -169,17 +169,17 @@ model_name = args.model
 
 TRAIN_epochs = args.epochs
 topks = eval(args.topks)
-valid_topks = eval(args.valid_topks)
-# tensorboard = args.tensorboard
+valid_topks = None
+if config["loss"] == "topk_loss":
+    print(config["loss"])
+    valid_topks = [args.lambda_k]
+else:
+    valid_topks = eval(args.valid_topks)
+
 comment = args.comment
 
 METHOD_CAT = None
-# if config["enable_group_weight"] == 1:
-#     METHOD_CAT = "Group_weight"
-# elif config["enable_group_emb"] == 1:
-#     METHOD_CAT = "Group_emb"
-# else:
-#     METHOD_CAT = "Normal"
+
 
 
 def cprint(words: str):
