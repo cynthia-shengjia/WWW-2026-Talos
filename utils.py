@@ -587,3 +587,9 @@ def sgd(params,
 
 
 # =================== end LLPAUC Optimizer =================
+
+
+def topk_metric_print(metrics: dict) -> None:
+    for metric_name,metric_values in metrics.items():
+        print(metric_name, end = "\t")
+        print(*metric_values, sep = "\t")

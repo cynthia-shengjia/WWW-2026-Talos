@@ -144,7 +144,7 @@ for epoch in range(world.TRAIN_epochs):
                 print("Early stop!")
                 cprint('[Test]')
                 test_res = procedure.Test(dataset, best_Recmodel, epoch, w, world.config["multicore"])
-                print("Test-Set",test_res)
+                util.topk_metric_print("Test-Set",test_res)
                 break
 
         for i in range(len(world.valid_topks)):
