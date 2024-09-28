@@ -122,14 +122,14 @@ for epoch in range(world.TRAIN_epochs):
         )
         if "NNI_PLATFORM" in os.environ:
             metric = {
-                "default": valid_ndcg[0],
-                "recall": valid_recall[0],
+                "ndcg": valid_ndcg[0],
+                "default": valid_recall[0],
                 "hit": valid_hit[0],
                 "precision": valid_precision[0],
             }
             nni.report_intermediate_result(metric)
 
-        if valid_ndcg[0] > best_ndcg[0] + 0.0001:
+        if valid_recall[0] > best_recall[0] + 0.0001:
             patience = 0
             if "NNI_PLATFORM" not in os.environ:
                 torch.save(Recmodel.state_dict(), os.path.join(save_dir, "best_model.pth"))
@@ -170,7 +170,7 @@ print(
     )
 )
 if "NNI_PLATFORM" in os.environ:
-    metric = {"default": best_ndcg[0], "recall": best_recall[0], "hit": best_hit[0], "precision": best_precision[0]}
+    metric = {"ndcg": best_ndcg[0], "default": best_recall[0], "hit": best_hit[0], "precision": best_precision[0]}
     nni.report_final_result(metric)
 
 print("Total time:{}".format(time.time() - start_total))

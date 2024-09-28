@@ -120,14 +120,14 @@ for epoch in range(world.TRAIN_epochs):
         )
         if "NNI_PLATFORM" in os.environ:
             metric = {
-                "default": valid_ndcg[0],
-                "recall": valid_recall[0],
+                "ndcg": valid_ndcg[0],
+                "default": valid_recall[0],
                 "hit": valid_hit[0],
                 "precision": valid_precision[0],
             }
             nni.report_intermediate_result(metric)
 
-        if valid_ndcg[0] > best_ndcg[0] + 0.0001:
+        if valid_recall[0] > best_recall[0] + 0.0001:
             patience = 0
             if "NNI_PLATFORM" not in os.environ:
                 torch.save(Recmodel.state_dict(), os.path.join(save_dir, "best_model.pth"))
@@ -158,39 +158,13 @@ for epoch in range(world.TRAIN_epochs):
 
 
 
-# res_stat = dict()
-# res_stat['recall'] = best_recall[0]
-# res_stat['ndcg'] = best_ndcg[0]
-
-# res_stat['test_recall'] = list(test_res['recall'])[0]
-# res_stat['test_ndcg'] = list(test_res['ndcg'])[0]
-
-# if world.config['mode'] == 'multi':
-#     res_file = os.path.join('res_new_stat', world.config['dataset'], world.config['loss']+'BSL')
-# elif world.config['mode'] == 'CCL':
-#     res_file = os.path.join('res_new_stat', world.config['dataset'], world.config['loss']+'CCL')
-# else:
-#     res_file = os.path.join('res_new_stat', world.config['dataset'], world.config['loss'])
-# if not os.path.exists(res_file):
-#     os.makedirs(res_file)
-
-# if world.config['mode'] == 'multi':
-#     res_file_path = os.path.join('res_new_stat', world.config['dataset'], world.config['loss']+'BSL', 'result.txt')
-# elif world.config['mode'] == 'CCL':
-#     res_file_path = os.path.join('res_new_stat', world.config['dataset'], world.config['loss']+'CCL', 'result.txt')
-# else:
-#     res_file_path = os.path.join('res_new_stat', world.config['dataset'], world.config['loss'], 'result.txt')
-# utils.write_result(res_file_path,res_stat,world.config)
-
-
-
 print(
     "Best_hit: {}, Best_ndcg: {}, Best_precision: {}, Best_recall: {}".format(
         best_hit, best_ndcg, best_precision, best_recall
     )
 )
 if "NNI_PLATFORM" in os.environ:
-    metric = {"default": best_ndcg[0], "recall": best_recall[0], "hit": best_hit[0], "precision": best_precision[0]}
+    metric = {"ndcg": best_ndcg[0], "default": best_recall[0], "hit": best_hit[0], "precision": best_precision[0]}
     nni.report_final_result(metric)
 
 print("Total time:{}".format(time.time() - start_total))
