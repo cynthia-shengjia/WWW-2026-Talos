@@ -79,7 +79,7 @@ def train_double_epoch(dataset: dataloader.Loader, recommend_model, loss_class, 
     time_one_epoch = int(time.time() - start)
     return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
 
-def train_double_batch_epoch_diff_neg(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, flag = True, device = "cpu",seed = 2024):
+def train_double_batch_epoch_diff_neg(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, device = "cpu",seed = 2024):
     Recmodel = recommend_model
     Recmodel.train()
     loss: utils.LossFunc = loss_class
@@ -139,7 +139,7 @@ def train_double_batch_epoch_diff_neg(dataset: dataloader.Loader, recommend_mode
     return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
 
 
-def train_double_batch_epoch(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, flag = True, device = "cpu",seed = 2024):
+def train_double_batch_epoch(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, device = "cpu",seed = 2024):
     Recmodel = recommend_model
     Recmodel.train()
     loss: utils.LossFunc = loss_class
@@ -195,8 +195,7 @@ def train_double_batch_epoch(dataset: dataloader.Loader, recommend_model, loss_c
     return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
 
 
-
-def Train_original(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, flag = True):
+def Train_adv_original(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, flag = True):
     Recmodel = recommend_model
     Recmodel.train()
     loss: utils.LossFunc = loss_class
@@ -232,7 +231,54 @@ def Train_original(dataset: dataloader.Loader, recommend_model, loss_class, epoc
 
             batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
             batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
-            cri = loss.step(batch_users, batch_pos, batch_neg, epoch, batch_id, flag)
+            cri = loss.adv_step(batch_users, batch_pos, batch_neg, epoch, batch_id, flag)
+            w.add_scalar("Loss", cri, iter_num + batch_id)
+            aver_loss += cri
+            # iter_num += 1
+
+        aver_loss = aver_loss / total_batch
+        # w.add_scalar("Loss", aver_loss, epoch)
+    time_one_epoch = int(time.time() - start)
+    return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
+
+
+def Train_original(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None):
+    Recmodel = recommend_model
+    Recmodel.train()
+    loss: utils.LossFunc = loss_class
+
+    start = time.time()
+    if config["full_batch"]:
+        # This means set batch size equals to interaction size
+        # This can make the training process fast, however the memory of GPU should be enough
+        S = utils.UniformSample_original(dataset, config["num_negative_items"])
+        users, posItems, negItems = S
+        users, posItems, negItems = utils.shuffle(users, posItems, negItems)
+    else:
+        users, posItems = dataset.trainUser_tensor, dataset.trainItem_tensor
+        users, posItems = utils.shuffle(users, posItems)
+
+    if config["full_batch"]:
+        users = users.cuda(non_blocking=True)
+        posItems = posItems.cuda(non_blocking=True)
+        negItems = negItems.cuda(non_blocking=True)
+
+        batch_size = len(users)
+        aver_loss = loss.step(users, posItems, negItems, epoch)
+        w.add_scalar(f"BPRLoss/BPR", aver_loss, epoch)
+    else:
+        batch_size = config["train_batch"]
+        total_batch = len(users) // batch_size + 1
+        aver_loss = 0.0
+
+        iter_num = epoch * total_batch
+        for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
+            batch_users = batch_users.cuda(non_blocking=True)
+            batch_pos = batch_pos.cuda(non_blocking=True)
+
+            batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
+            batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
+            cri = loss.step(batch_users, batch_pos, batch_neg, epoch, batch_id)
             w.add_scalar("Loss", cri, iter_num + batch_id)
             aver_loss += cri
             # iter_num += 1

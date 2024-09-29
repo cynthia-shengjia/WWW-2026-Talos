@@ -76,11 +76,16 @@ def parse_args():
     parser.add_argument("--keepprob", type=float, default=0.0)
     
     # XSimGCL or SimGCL or LightGCL
-    parser.add_argument("--cl_rate", type=float, default=0.001)
-    parser.add_argument("--eps", type=float, default=0.2)
-    parser.add_argument("--cl_temp", type=float, default=0.2)
-    parser.add_argument("--cl_layer", type=int, default=0)
+    parser.add_argument("--cl_rate", type=float, default=0.2)         # the weight of InfoNCE
+    parser.add_argument("--eps", type=float, default=0.1)               # the modulus of noise 
+    parser.add_argument("--cl_temp", type=float, default=0.2)           # the contrastive learning temperature
+    parser.add_argument("--cl_layer", type=int, default=0)              # the cl layer
     parser.add_argument("--q", type=int, default=5)
+
+    #  cl_rate = [0.2]
+    #      eps = [0.1, 0.2, 0.05]
+    #  cl_temp = [0.2]
+    # cl_layer = [0]
 
     #
     parser.add_argument("--sample_noise", type = int, default = 0)
@@ -175,6 +180,11 @@ if config["loss"] == "topk_loss":
     valid_topks = [args.lambda_k]
 else:
     valid_topks = eval(args.valid_topks)
+
+if config["dataset"] == "amazonElectronics":
+    config["eps"] = 0.1
+else:
+    config["eps"] = 0.2
 
 comment = args.comment
 

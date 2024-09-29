@@ -978,6 +978,53 @@ class XSimGCL(LightGCN):
         return loss + emb_loss + cl_loss
 
 
+    def quantile_loss(self, users, user_pos, neg):
+        embedding_user, embedding_item, _ , _ = self.compute()
+        embedding_item_add = torch.cat( ( embedding_item, torch.zeros(1, self.latent_dim).cuda()) )
+        users_emb = embedding_user[users.long()]        # (B,dim)
+        pos_emb = embedding_item_add[user_pos]          # (B,PadSize,dim)
+        neg_emb = embedding_item[neg.long()]            # (B,PadSize,dim)
+
+
+        pos_scores = torch.bmm(users_emb.unsqueeze(1), pos_emb.transpose(1, 2)).squeeze(1)
+        neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
+
+        margin_vec = self.margin_vector[users.long()]
+
+        loss = self.compute_quantile_loss(user_pos, pos_scores, neg_scores, margin_vec)
+
+        return loss
+
+    def precision_topk_loss(self,users, pos, neg, epoch = None, batch_idx = None):
+        embedding_user, embedding_item, cl_user_emb, cl_item_emb = self.compute()
+
+        users_emb = embedding_user[users.long()]    # (Batch, Latent_dim)
+        pos_emb = embedding_item[pos.long()]        # (Batch, Latent_dim)
+        neg_emb = embedding_item[neg.long()]        # (Batch, Negative_Num, Latent_dim)
+
+        cl_loss = self.config["cl_rate"] * self.cal_cl_loss(
+            [users, pos], embedding_user, cl_user_emb, embedding_item, cl_item_emb
+        )
+
+
+        batch_size = users_emb.shape[0]
+
+        margin_vec = self.margin_vector[users.long()]
+
+        pos_scores = torch.sum(users_emb * pos_emb, dim=1)
+        neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
+        y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
+
+        topk_loss = self.compute_precision_topk_loss(y_pred, margin_vec)
+
+        "L_2 regulization"
+        regularize = (torch.norm(users_emb[:, :]) ** 2
+                      + torch.norm(pos_emb[:, :]) ** 2
+                      + torch.norm(neg_emb[:, :]) ** 2) / 2  # take hop=0
+        emb_loss = self.weight_decay * regularize / batch_size
+
+
+        return topk_loss + cl_loss, emb_loss
 
 
     def bce_loss(self, users, pos, neg):

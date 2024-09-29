@@ -156,11 +156,11 @@ for epoch in range(world.TRAIN_epochs):
     if (epoch + 3) % world.config['adv_interval'] == 0 and current_eta < world.config['eta_epochs'] and epoch > world.config['warm_up_epochs']:
         Recmodel.freeze_prob(False)
         cprint('advTrain')
-        output_information_adv = procedure.Train_original(dataset, Recmodel, loss_func, epoch, world.config, w=w, flag = False)
+        output_information_adv = procedure.Train_adv_original(dataset, Recmodel, loss_func, epoch, world.config, w=w, flag = False)
         current_eta += 1
 
     Recmodel.freeze_prob(True)
-    output_information = procedure.Train_original(dataset, Recmodel, loss_func, epoch, world.config, w=w, flag = True)
+    output_information = procedure.Train_adv_original(dataset, Recmodel, loss_func, epoch, world.config, w=w, flag = True)
     print(f"EPOCH[{epoch+1}/{world.TRAIN_epochs}] {output_information}")
 
 

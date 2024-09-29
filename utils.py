@@ -85,8 +85,25 @@ class LossFunc:
         self.opt_model.step()
 
         return quantile_loss.cpu().item()
+    
+    def adv_step(self, users, pos, neg, epoch: int = None, batch_id: int = None, flag: bool = True):
+        ssm_loss, emb_loss, reg_loss_prob = self.model.advInfoNCE(users, pos, neg, epoch, batch_id)
+        if flag:
+            loss = ssm_loss + emb_loss
+        else:
+            loss = reg_loss_prob - ssm_loss
+        
+        if flag:
+            self.opt.zero_grad()
+            loss.backward()
+            self.opt.step()
+        else:
+            self.adv_opt.zero_grad()
+            loss.backward()
+            self.adv_opt.step()
+        return ssm_loss.cpu().item()
 
-    def step(self, users, pos, neg, epoch: int = None, batch_id: int = None, flag: bool = True):
+    def step(self, users, pos, neg, epoch: int = None, batch_id: int = None):
         if world.config["loss"] == "bpr":
             loss = self.model.bpr_loss(users, pos, neg)
         elif world.config["loss"] == "softmax":
@@ -97,50 +114,32 @@ class LossFunc:
             loss = self.model.rmse_loss(users, pos, neg)
         elif world.config["loss"] == "renyi":
             loss = self.model.renyi_loss(users, pos, neg, self.opt_margin, epoch, batch_id)
-        elif world.config["loss"] == "advinfonce":
-            ssm_loss, emb_loss, reg_loss_prob = self.model.advInfoNCE(users, pos, neg, epoch, batch_id)
-            if flag:
-                loss = ssm_loss + emb_loss
-            else:
-                loss = reg_loss_prob - ssm_loss
         elif world.config["loss"] == 'llpauc':
             ssm_loss, emb_loss = self.model.llpauc(users, pos, neg, epoch, batch_id)
             loss = ssm_loss + emb_loss
         elif world.config["loss"] == "topk_loss":
             quantile_loss, topk_loss, emb_loss = self.model.PrecisionAtK(users,pos,neg,epoch,batch_id)
-            # topk_loss, emb_loss = self.model.precision_topk_loss(users, pos, neg, epoch, batch_id)
             loss = topk_loss + emb_loss
         else:
             raise NotImplementedError
         
-        if flag:
-            if world.config["loss"] == 'llpauc':
-                self.opt.zero_grad()
-                loss.backward()
-                if self.search_optimizer=='minmax_adam':
-                    self.model.gamma.grad= -self.model.gamma.grad
-                    self.model.sp.grad= -self.model.sp.grad
-                # if self.clip_grad_norm:
-                #     clip_grad_norm_(self.model.parameters(), **self.clip_grad_norm)
-                self.opt.step()
-            elif world.config["loss"] == "topk_loss":
 
-                # self.opt_quant.zero_grad()
-                # quantile_loss.backward()
-                # self.opt_quant.step()
-
-                self.opt_model.zero_grad()
-                loss.backward()
-                self.opt_model.step()
-
-            else:
-                self.opt.zero_grad()
-                loss.backward()
-                self.opt.step()
-        else:
-            self.adv_opt.zero_grad()
+        if world.config["loss"] == 'llpauc':
+            self.opt.zero_grad()
             loss.backward()
-            self.adv_opt.step()
+            if self.search_optimizer=='minmax_adam':
+                self.model.gamma.grad= -self.model.gamma.grad
+                self.model.sp.grad= -self.model.sp.grad
+            self.opt.step()
+        elif world.config["loss"] == "topk_loss":
+            self.opt_model.zero_grad()
+            loss.backward()
+            self.opt_model.step()
+        else:
+            self.opt.zero_grad()
+            loss.backward()
+            self.opt.step()
+
     
         return loss.cpu().item()
 
