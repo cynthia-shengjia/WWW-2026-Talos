@@ -117,8 +117,11 @@ class LossFunc:
         elif world.config["loss"] == 'llpauc':
             ssm_loss, emb_loss = self.model.llpauc(users, pos, neg, epoch, batch_id)
             loss = ssm_loss + emb_loss
-        elif world.config["loss"] == "topk_loss":
-            quantile_loss, topk_loss, emb_loss = self.model.PrecisionAtK(users,pos,neg,epoch,batch_id)
+        # elif world.config["loss"] == "topk_loss":
+        #     quantile_loss, topk_loss, emb_loss = self.model.PrecisionAtK(users,pos,neg,epoch,batch_id)
+        #     loss = topk_loss + emb_loss
+        elif world.config["loss"] == "single_topk_loss":
+            topk_loss, emb_loss = self.model.precision_single_topk_loss(users,pos,neg,epoch,batch_id)
             loss = topk_loss + emb_loss
         else:
             raise NotImplementedError

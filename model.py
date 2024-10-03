@@ -169,6 +169,45 @@ class BasicModel(nn.Module):
 
         return loss
 
+
+    def compute_single_precision_topk_loss(self,y_pred):
+        """ Loss Part """
+        trunc_pos = y_pred[:, 0] 
+        trunc_neg = y_pred[:, 1:]
+
+        pos_logits = torch.sigmoid(trunc_pos / self.config["ssm_temp"])
+        neg_logits = torch.sigmoid(trunc_neg / self.config['ssm_temp'])  # neg_logits = torch.sigmoid(  torch.cat( (trunc_neg, trunc_pos.unsqueeze(1)), 1 )  / self.config["ssm_temp"])
+        topk_loss = -torch.log(pos_logits / neg_logits.sum(dim=1))
+
+
+
+        return topk_loss.mean()
+
+    def precision_single_topk_loss(self,users, pos, neg, epoch = None, batch_idx = None):
+        embedding_user, embedding_item = self.compute()
+
+        users_emb = embedding_user[users.long()]  # (Batch, Latent_dim)
+        pos_emb = embedding_item[pos.long()]  # (Batch, Latent_dim)
+        neg_emb = embedding_item[neg.long()]  # (Batch, Negative_Num, Latent_dim)
+
+        batch_size = users_emb.shape[0]
+
+        pos_scores = torch.sum(users_emb * pos_emb, dim=1)
+        neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
+        y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
+
+        topk_loss = self.compute_single_precision_topk_loss(y_pred)
+
+        "L_2 regulization"
+        regularize = (torch.norm(users_emb[:, :]) ** 2
+                      + torch.norm(pos_emb[:, :]) ** 2
+                      + torch.norm(neg_emb[:, :]) ** 2) / 2  # take hop=0
+        emb_loss = self.weight_decay * regularize / batch_size
+
+
+        return topk_loss, emb_loss
+
+    
     def compute_precision_topk_loss(self,y_pred, margin_vec):
         """ Loss Part """
         trunc_pos = y_pred[:, 0] - (margin_vec.squeeze()).detach()
