@@ -54,6 +54,29 @@ class LossFunc:
 
 
         self.dataset = dataset
+    
+    def sort_quantile(self, users, user_pos, neg, epoch: int = None, batch_idx: int = None):
+        margin = self.model.sort_to_get_quantile(users, user_pos, neg)
+        return margin
+
+    def sort_precision_step(self,users, pos, neg, margin, epoch: int = None, batch_id: int = None) -> float:
+        """
+            Args:
+                users: users in (u,i) interactions of a batch
+                pos:   positive items in (u,i) interactions of a batch
+                neg:   negative items sampled for user u
+
+            Returns:
+                float: The return value. The average loss value
+        """
+        quantile_loss,emb_loss = self.model.precision_topk_loss(users,pos,neg,margin, epoch,batch_id)
+        loss = quantile_loss + emb_loss
+
+        self.opt_model.zero_grad()
+        loss.backward()
+        self.opt_model.step()
+
+        return quantile_loss.cpu().item()
 
     def check_diff_margin_and_topk(self, users) -> float:
         loss =  self.model.diff_margin_and_topk(users) / users.shape[0]

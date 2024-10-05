@@ -102,8 +102,55 @@ class BasicModel(nn.Module):
             self.embedding_item.requires_grad_(False)
 
 
-    def sort_topk_loss(self, users):
-        pass
+    def compute_sort_quantile(self, user_pos, pos_scores, neg_scores):
+        pos_check_tensor = torch.not_equal(user_pos, torch.full_like(user_pos, self.num_items).to(torch.int64))
+
+        all_scores = torch.cat((self.f(pos_scores) * pos_check_tensor, self.f(neg_scores)), dim = 1)
+        origin_all_scores = torch.cat((pos_scores, neg_scores), dim = 1)
+        _,topk_index = torch.topk(input = all_scores, dim = 1, k = self.dynamic_t)
+
+        return torch.gather(input = origin_all_scores, dim = 1, index=(topk_index[:,-1]).unsqueeze(dim = 1))
+
+    def sort_to_get_quantile(self, users, user_pos, neg):
+        embedding_user, embedding_item = self.compute()
+        embedding_item_add = torch.cat( ( embedding_item, torch.zeros(1, self.latent_dim).cuda()) )
+        users_emb = embedding_user[users.long()]        # (B,dim)
+        pos_emb = embedding_item_add[user_pos]          # (B,PadSize,dim)
+        neg_emb = embedding_item[neg.long()]            # (B,PadSize,dim)
+
+
+        pos_scores = torch.bmm(users_emb.unsqueeze(1), pos_emb.transpose(1, 2)).squeeze(1)
+        neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
+
+        margin = self.compute_sort_quantile(user_pos, pos_scores, neg_scores)
+
+        return margin
+
+
+
+    def precision_sort_topk_loss(self,users, pos, neg, margin_vec, epoch = None, batch_idx = None):
+        embedding_user, embedding_item = self.compute()
+
+        users_emb = embedding_user[users.long()]  # (Batch, Latent_dim)
+        pos_emb = embedding_item[pos.long()]  # (Batch, Latent_dim)
+        neg_emb = embedding_item[neg.long()]  # (Batch, Negative_Num, Latent_dim)
+
+        batch_size = users_emb.shape[0]
+
+        pos_scores = torch.sum(users_emb * pos_emb, dim=1)
+        neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
+        y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
+
+        topk_loss = self.compute_precision_topk_loss(y_pred, margin_vec)
+
+        "L_2 regulization"
+        regularize = (torch.norm(users_emb[:, :]) ** 2
+                      + torch.norm(pos_emb[:, :]) ** 2
+                      + torch.norm(neg_emb[:, :]) ** 2) / 2  # take hop=0
+        emb_loss = self.weight_decay * regularize / batch_size
+
+
+        return topk_loss, emb_loss
 
     """Util Functions to Compute the Difference Between Margin Vector and True TopK Scores"""
     def diff_margin_and_topk(self, users):
@@ -248,56 +295,6 @@ class BasicModel(nn.Module):
         return topk_loss, emb_loss
 
 
-    """ Double Batch Loss Update Strategies """
-    def compute_topk_loss(self, y_pred, margin_vec, lambda_t):
-        """ Margin Search Part """
-
-        # score =  y_pred[:,0:17].detach()
-        score = (y_pred[:, 0].detach()).unsqueeze(dim=1)
-        quantile_one = torch.mean(torch.relu(score - margin_vec), dim=1)
-        quantile_two = torch.mean(torch.relu(margin_vec - score), dim=1)
-
-        quantile_loss = lambda_t * quantile_one + (1 - lambda_t) * quantile_two
-
-        """ Loss Part """
-        trunc_pos = y_pred[:, 0] - (margin_vec.squeeze()).detach()
-        trunc_neg = y_pred[:, 1:] - margin_vec.detach()
-
-        pos_logits = torch.sigmoid(trunc_pos / self.config["ssm_temp"])
-        neg_logits = torch.sigmoid(trunc_neg / self.config[
-            'ssm_temp'])  # neg_logits = torch.sigmoid(  torch.cat( (trunc_neg, trunc_pos.unsqueeze(1)), 1 )  / self.config["ssm_temp"])
-        topk_loss = -torch.log(pos_logits / neg_logits.sum(dim=1))
-
-        return quantile_loss.sum(), topk_loss.mean()
-
-    def PrecisionAtK(self, users, pos, neg, epoch = None, batch_idx = None):
-        embedding_user, embedding_item = self.compute()
-
-        users_emb   =   embedding_user[users.long()]    #   (Batch, Latent_dim)
-        pos_emb     =   embedding_item[pos.long()]        #   (Batch, Latent_dim)
-        neg_emb     =   embedding_item[neg.long()]        #   (Batch, Negative_Num, Latent_dim)
-
-
-        batch_size = users_emb.shape[0]             
-
-        margin_vec = self.margin_vector[users.long()]
-
-
-        pos_scores = torch.sum(users_emb * pos_emb, dim=1)
-        neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
-        y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
-
-
-        quantile_loss, topk_loss = self.compute_topk_loss(y_pred,margin_vec, self.lambda_t)
-        
-
-        "L_2 regulization"
-        regularize = (torch.norm(users_emb[:, :]) ** 2
-                       + torch.norm(pos_emb[:, :]) ** 2
-                        + torch.norm(neg_emb[:,:]) ** 2 ) / 2  # take hop=0
-        emb_loss = self.weight_decay * regularize / batch_size
-
-        return quantile_loss, topk_loss, emb_loss
 
     """Softmax Loss"""
     def compute_ssm_loss(self, y_pred,user):
@@ -352,61 +349,6 @@ class BasicModel(nn.Module):
         return loss + emb_loss
         # return loss
 
-    """Renyi DRO Loss"""
-    def compute_renyi_loss(self,y_pred,margin_vec,opt_margin):
-        omega_star = self.omega / (self.omega - 1)
-        pos_logits = y_pred[:, 0]
-        neg_logits = y_pred[:, 1:]
-        eps = 1e-1
-
-        if self.config['mode'] == 'original loss':
-            constant = math.pow(self.config['num_negative_items'], -1 / omega_star)
-            loss_search_margin = (constant * torch.norm( eps + torch.relu(neg_logits.detach() - margin_vec) * self.config['neg_coefficient'], omega_star,dim = 1) + margin_vec.squeeze()).sum()
-
-            opt_margin.zero_grad()
-            loss_search_margin.backward()
-            opt_margin.step()
-
-            pos_loss = torch.relu(1 - pos_logits)
-            neg_loss = constant * torch.norm( eps + torch.relu(neg_logits - margin_vec.detach())  * self.config['neg_coefficient'], omega_star,dim = 1) + (margin_vec.detach()).squeeze()
-
-
-            loss = (pos_loss + neg_loss).mean()
-        elif self.config['mode'] == 'CCL':
-            pos_loss = torch.relu(1 - pos_logits)
-            neg_loss = (torch.relu(neg_logits - self.margin)).mean(dim = 1) * self.config['neg_coefficient']
-            loss = (pos_loss + neg_loss).mean()
-
-        return loss
-
-    def renyi_loss(self,users, pos, neg, opt_margin, epoch=None, batch_idx=None):
-        embedding_user, embedding_item = self.compute()
-
-        users_emb = embedding_user[users.long()]
-        pos_emb = embedding_item[pos.long()]
-        neg_emb = embedding_item[neg.long()]
-        if self.config['learning_mode'] == 'single':
-            margin_vec = self.margin_vector
-        else:
-            margin_vec = self.margin_vector[users.long()]
-        batch_size = users_emb.shape[0]
-
-
-        pos_scores = torch.sum(users_emb * pos_emb, dim=1)
-        neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
-        y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
-
-
-        loss = self.compute_renyi_loss(y_pred,margin_vec,opt_margin)
-
-        regularize = (torch.norm(users_emb[:, :]) ** 2
-                       + torch.norm(pos_emb[:, :]) ** 2
-                       + torch.norm(neg_emb[:,:]) ** 2 ) / 2  # take hop=0
-
-        emb_loss = self.weight_decay * regularize/ users_emb.shape[0]
-
-        return loss + emb_loss
-        # return loss
 
     """BCE Loss"""
     def bce_loss(self, users, pos, neg):
