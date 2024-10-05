@@ -144,7 +144,7 @@ for epoch in range(world.TRAIN_epochs):
                 print(test_res)
                 break
 
-        for i in range(len(world.topks)):
+        for i in range(len(world.valid_topks)):
             best_recall[i], best_ndcg[i], best_hit[i], best_precision[i] = (
                 max(best_recall[i], valid_recall[i]),
                 max(best_ndcg[i], valid_ndcg[i]),

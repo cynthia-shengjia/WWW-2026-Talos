@@ -57,7 +57,7 @@ def train_double_batch_epoch_sort(dataset: dataloader.Loader, recommend_model, l
         config["num_quantile_negative_items"], replacement=True,generator=generator)
         with torch.no_grad():
             margin = loss.sort_quantile(users = batch_users, user_pos=batch_user_pos, neg = batch_quantile_neg)
-        cri = loss.precision_step(batch_users, batch_pos, batch_neg, margin, epoch, batch_id)
+        cri = loss.sort_precision_step(batch_users, batch_pos, batch_neg, margin, epoch, batch_id)
         w.add_scalar("Loss", cri, iter_num + batch_id)
         aver_loss += cri
         # iter_num += 1     

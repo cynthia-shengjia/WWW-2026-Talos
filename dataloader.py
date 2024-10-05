@@ -14,7 +14,7 @@ from scipy.sparse import csr_matrix
 from tqdm import tqdm
 import world
 from world import cprint
-import cppimport
+# import cppimport
 from multiprocessing import Pool, cpu_count
 
 from scipy.sparse import coo_matrix

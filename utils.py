@@ -69,7 +69,7 @@ class LossFunc:
             Returns:
                 float: The return value. The average loss value
         """
-        quantile_loss,emb_loss = self.model.precision_topk_loss(users,pos,neg,margin, epoch,batch_id)
+        quantile_loss,emb_loss = self.model.precision_sort_topk_loss(users,pos,neg,margin, epoch,batch_id)
         loss = quantile_loss + emb_loss
 
         self.opt_model.zero_grad()
