@@ -55,8 +55,12 @@ class LossFunc:
 
         self.dataset = dataset
     
+    def sort_prcious_topk(self, users, epoch: int = None, batch_idx: int = None):
+        margin = self.model.compute_precision_topks(users)
+        return margin.unsqueeze(dim = 1)
+
     def sort_quantile(self, users, user_pos, neg, epoch: int = None, batch_idx: int = None):
-        margin = self.model.sort_to_get_quantile(users, user_pos, neg)
+        margin = self.model.comput_precision_topks(users, user_pos, neg)
         return margin
 
     def sort_precision_step(self,users, pos, neg, margin, epoch: int = None, batch_id: int = None) -> float:
@@ -72,9 +76,9 @@ class LossFunc:
         quantile_loss,emb_loss = self.model.precision_sort_topk_loss(users,pos,neg,margin, epoch,batch_id)
         loss = quantile_loss + emb_loss
 
-        self.opt_model.zero_grad()
+        self.opt.zero_grad()
         loss.backward()
-        self.opt_model.step()
+        self.opt.step()
 
         return quantile_loss.cpu().item()
 

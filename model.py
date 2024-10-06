@@ -101,6 +101,11 @@ class BasicModel(nn.Module):
             self.embedding_user.requires_grad_(False)
             self.embedding_item.requires_grad_(False)
 
+    def compute_precision_topks(self, user):
+        embedding_user, embedding_item = self.compute()
+        users_emb = embedding_user[user.long()]
+        scores = users_emb @ embedding_item.T
+        return torch.topk(input = scores, dim = 1, k = self.dynamic_t)[0][:,-1]
 
     def compute_sort_quantile(self, user_pos, pos_scores, neg_scores):
         pos_check_tensor = torch.not_equal(user_pos, torch.full_like(user_pos, self.num_items).to(torch.int64))

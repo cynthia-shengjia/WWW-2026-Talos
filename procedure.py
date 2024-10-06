@@ -20,6 +20,57 @@ from world import cprint
 CORES = multiprocessing.cpu_count() // 2  # 4090服务器上有256个核心
 
 
+def train_double_batch_epoch_sort_precious(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, device = "cpu",seed = 2024):
+    Recmodel = recommend_model
+    Recmodel.train()
+    loss: utils.LossFunc = loss_class
+
+    start = time.time()
+
+    # minibatch data load
+    users, posItems = dataset.trainUser_tensor, dataset.trainItem_tensor
+    users, posItems = utils.shuffle(users, posItems)
+
+    # minibatch data training
+    batch_size = config["train_batch"]
+    total_batch = len(users) // batch_size + 1
+    aver_loss = 0.0
+
+    # 1. the padding positive items
+    # 2. the users arrange to make minibatch run
+
+
+    iter_num = epoch * total_batch
+    for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
+        batch_users = batch_users.cuda(non_blocking=True)
+
+        batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
+        batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
+        with torch.no_grad():
+            margin = loss.sort_prcious_topk(users = batch_users)
+        cri = loss.sort_precision_step(batch_users, batch_pos, batch_neg, margin, epoch, batch_id)
+        w.add_scalar("Loss", cri, iter_num + batch_id)
+        aver_loss += cri
+        # iter_num += 1     
+        
+
+    aver_loss = aver_loss / total_batch
+    # w.add_scalar("Loss", aver_loss, epoch)
+
+    aver_diff_loss = 0
+    if config["diff_margin_and_topk"]:
+        with torch.no_grad():
+            for batch_id, batch_users in enumerate(utils.minibatch( torch.arange(0, dataset.n_users) , batch_size=batch_size) ):
+                cri = loss.check_diff_margin_and_topk(batch_users)
+                aver_diff_loss += cri
+                w.add_scalar("diff_margin_topk", cri, iter_num + batch_id)
+
+    # aver_diff_loss = aver_diff_loss / dataset.n_users
+
+    time_one_epoch = int(time.time() - start)
+    return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
+
+
 def train_double_batch_epoch_sort(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, device = "cpu",seed = 2024):
     Recmodel = recommend_model
     Recmodel.train()
