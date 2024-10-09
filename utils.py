@@ -150,6 +150,9 @@ class LossFunc:
         elif world.config["loss"] == "single_topk_loss":
             topk_loss, emb_loss = self.model.precision_single_topk_loss(users,pos,neg,epoch,batch_id)
             loss = topk_loss + emb_loss
+        elif world.config["loss"] == "softmax_align":
+            topk_loss, emb_loss = self.model.align_softmax(users,pos,neg,epoch,batch_id)
+            loss = topk_loss + emb_loss
         else:
             raise NotImplementedError
         

@@ -7,6 +7,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="DRO_SSM")
     # Learning   adv_lr  eta_epochs  warm_up_epochs alpha beta  clip_grad_norm reg_weight noise_ratio  learning_mode
+    parser.add_argument("--activate_func", type=str, default = "exp")
     parser.add_argument("--valid_topks", nargs="?", default="[20]", help="@k test list")
 
     parser.add_argument("--num_quantile_negative_items", type = int)
@@ -100,6 +101,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 all_models = ["lgn", "mf"]
 config = {
+    "activate_func": args.activate_func,
     "lambda_k": args.lambda_k,
     "shift_mode": args.shift_mode,
     "learning_mode": args.learning_mode,
@@ -181,10 +183,6 @@ if config["loss"] == "topk_loss":
 else:
     valid_topks = eval(args.valid_topks)
 
-if config["dataset"] == "amazonElectronics":
-    config["eps"] = 0.1
-else:
-    config["eps"] = 0.2
 
 comment = args.comment
 

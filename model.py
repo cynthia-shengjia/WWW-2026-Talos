@@ -81,7 +81,11 @@ class BasicModel(nn.Module):
 
             self.embed_user_p.requires_grad_(False)
             self.embed_item_p.requires_grad_(False)
-            
+        elif self.config["loss"] == "softmax_align":
+            self.activate = {
+                "exp": lambda x: torch.exp(x),
+                "sigmoid": lambda x: torch.sigmoid(x)
+            }
 
         # elif self.config['loss'] == 'softmax':
         #     self.temp_vector = (self.config["ssm_temp"] * torch.ones((self.num_users, 1),requires_grad=True)).cuda()
@@ -300,6 +304,36 @@ class BasicModel(nn.Module):
         return topk_loss, emb_loss
 
 
+    def compute_align_softmax(self, y_pred,user):
+        pos_logits = self.activate[self.config["activate_func"]](y_pred[:, 0] / self.config["ssm_temp"])
+        neg_logits = self.activate[self.config["activate_func"]](y_pred[:, 1:] / self.config["ssm_temp"])
+
+        compute_unit = pos_logits / torch.sum(input = neg_logits, dim = 1)
+        loss = -torch.log(compute_unit) + torch.log(compute_unit + self.config["neg_coefficient"] * 1)
+        return loss.mean()
+
+
+    def align_softmax(self, users, pos, neg, epoch=None, batch_idx=None):
+        embedding_user, embedding_item = self.compute()
+
+        users_emb = embedding_user[users.long()]
+        pos_emb = embedding_item[pos.long()]
+        neg_emb = embedding_item[neg.long()]
+        batch_size = users_emb.shape[0]
+
+        pos_scores = torch.sum(users_emb * pos_emb, dim=1)
+        neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
+        y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
+
+        loss = self.compute_align_softmax(y_pred,users)
+
+        regularize = (torch.norm(users_emb[:, :]) ** 2
+                       + torch.norm(pos_emb[:, :]) ** 2
+                        + torch.norm(neg_emb[:,:]) ** 2 ) / 2  # take hop=0
+        emb_loss = self.weight_decay * regularize / batch_size
+        
+        return loss, emb_loss
+   
 
     """Softmax Loss"""
     def compute_ssm_loss(self, y_pred,user):
