@@ -150,7 +150,7 @@ class BasicModel(nn.Module):
         neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
         y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
 
-        topk_loss = self.compute_precision_topk_loss(y_pred, margin_vec)
+        topk_loss = self.compute_precision_topk_loss(y_pred, margin_vec, users)
 
         "L_2 regulization"
         regularize = (torch.norm(users_emb[:, :]) ** 2
@@ -264,16 +264,20 @@ class BasicModel(nn.Module):
         return topk_loss, emb_loss
 
     
-    def compute_precision_topk_loss(self,y_pred, margin_vec):
+    def compute_precision_topk_loss(self,y_pred, margin_vec, user = None):
         """ Loss Part """
         trunc_pos = y_pred[:, 0] - (margin_vec.squeeze()).detach()
         trunc_neg = y_pred[:, 1:] - margin_vec.detach()
 
         pos_logits = torch.sigmoid(trunc_pos / self.config["ssm_temp"])
         neg_logits = torch.sigmoid(trunc_neg / self.config['ssm_temp'])  # neg_logits = torch.sigmoid(  torch.cat( (trunc_neg, trunc_pos.unsqueeze(1)), 1 )  / self.config["ssm_temp"])
+
+        if self.config["mode"] == "multi":
+            user = user.contiguous().view(-1, 1)
+            mask = torch.eq(user, user.T).float()
+            pos_logits = (pos_logits.unsqueeze(0) * mask).sum(1) / mask.sum(1)
+
         topk_loss = -torch.log(pos_logits / neg_logits.sum(dim=1))
-
-
 
         return topk_loss.mean()
 
