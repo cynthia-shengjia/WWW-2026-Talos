@@ -12,8 +12,8 @@ import pandas as pd
 from torch.utils.data import Dataset
 from scipy.sparse import csr_matrix
 from tqdm import tqdm
-import world
-from world import cprint
+from tools import world
+from tools.world import cprint
 # import cppimport
 from multiprocessing import Pool, cpu_count
 

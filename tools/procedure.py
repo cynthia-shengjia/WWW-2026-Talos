@@ -1,29 +1,23 @@
 """
 Design training and test process
 """
-import random
 import time
-from tqdm import tqdm
-import world
+from tools import world, utils
 import numpy as np
 import torch
-import utils
-from utils import minibatch
-from utils import timer
-import model
 import multiprocessing
-import pdb
-import dataloader
-from world import cprint
+from dataset import dataloader
+from tools.world import cprint
 
 
 CORES = multiprocessing.cpu_count() // 2  # 4090服务器上有256个核心
 
 
-def train_double_batch_epoch_sort_precious(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, device = "cpu",seed = 2024):
+def Train_Topks(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config,
+                                           w=None, device="cpu", seed=2024):
     Recmodel = recommend_model
     Recmodel.train()
-    loss: utils.LossFunc = loss_class
+    loss = loss_class
 
     start = time.time()
 
@@ -38,7 +32,6 @@ def train_double_batch_epoch_sort_precious(dataset: dataloader.Loader, recommend
 
     # 1. the padding positive items
     # 2. the users arrange to make minibatch run
-
 
     iter_num = epoch * total_batch
     for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
@@ -47,237 +40,47 @@ def train_double_batch_epoch_sort_precious(dataset: dataloader.Loader, recommend
         batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
         batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
         with torch.no_grad():
-            margin = loss.sort_prcious_topk(users = batch_users)
-        cri = loss.sort_precision_step(batch_users, batch_pos, batch_neg, margin, epoch, batch_id)
+            margin = loss.compute_topks(users=batch_users)
+        cri = loss.step(batch_users, batch_pos, batch_neg, margin)
         w.add_scalar("Loss", cri, iter_num + batch_id)
         aver_loss += cri
-        # iter_num += 1     
-        
+        # iter_num += 1
 
     aver_loss = aver_loss / total_batch
     # w.add_scalar("Loss", aver_loss, epoch)
-
-    aver_diff_loss = 0
-    if config["diff_margin_and_topk"]:
-        with torch.no_grad():
-            for batch_id, batch_users in enumerate(utils.minibatch( torch.arange(0, dataset.n_users) , batch_size=batch_size) ):
-                cri = loss.check_diff_margin_and_topk(batch_users)
-                aver_diff_loss += cri
-                w.add_scalar("diff_margin_topk", cri, iter_num + batch_id)
-
-    # aver_diff_loss = aver_diff_loss / dataset.n_users
 
     time_one_epoch = int(time.time() - start)
     return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
 
 
-def train_double_batch_epoch_sort(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, device = "cpu",seed = 2024):
+def Train(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None):
     Recmodel = recommend_model
     Recmodel.train()
-    loss: utils.LossFunc = loss_class
+    loss = loss_class
 
     start = time.time()
 
-    # minibatch data load
     users, posItems = dataset.trainUser_tensor, dataset.trainItem_tensor
     users, posItems = utils.shuffle(users, posItems)
 
-    user_pos_items = dataset.user_pos_items
 
-    # minibatch data training
     batch_size = config["train_batch"]
     total_batch = len(users) // batch_size + 1
     aver_loss = 0.0
-
-    # 1. the padding positive items
-    # 2. the users arrange to make minibatch run
-    generator = torch.Generator(device=device)
-    generator.manual_seed(seed)
 
     iter_num = epoch * total_batch
     for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
         batch_users = batch_users.cuda(non_blocking=True)
         batch_pos = batch_pos.cuda(non_blocking=True)
 
-
-        batch_user_pos = user_pos_items[batch_users]
-
         batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
         batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
-        batch_quantile_neg = torch.multinomial(batch_not_interaction_tensor, 
-        config["num_quantile_negative_items"], replacement=True,generator=generator)
-        with torch.no_grad():
-            margin = loss.sort_quantile(users = batch_users, user_pos=batch_user_pos, neg = batch_quantile_neg)
-        cri = loss.sort_precision_step(batch_users, batch_pos, batch_neg, margin, epoch, batch_id)
+        cri = loss.step(batch_users, batch_pos, batch_neg)
         w.add_scalar("Loss", cri, iter_num + batch_id)
         aver_loss += cri
-        # iter_num += 1     
-        
+        # iter_num += 1
 
     aver_loss = aver_loss / total_batch
-    # w.add_scalar("Loss", aver_loss, epoch)
-
-    aver_diff_loss = 0
-    if config["diff_margin_and_topk"]:
-        with torch.no_grad():
-            for batch_id, batch_users in enumerate(utils.minibatch( torch.arange(0, dataset.n_users) , batch_size=batch_size) ):
-                cri = loss.check_diff_margin_and_topk(batch_users)
-                aver_diff_loss += cri
-                w.add_scalar("diff_margin_topk", cri, iter_num + batch_id)
-
-    # aver_diff_loss = aver_diff_loss / dataset.n_users
-
-    time_one_epoch = int(time.time() - start)
-    return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
-
-
-def train_double_batch_epoch_diff_neg(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, device = "cpu",seed = 2024):
-    Recmodel = recommend_model
-    Recmodel.train()
-    loss: utils.LossFunc = loss_class
-
-    start = time.time()
-
-    # minibatch data load
-    users, posItems = dataset.trainUser_tensor, dataset.trainItem_tensor
-    users, posItems = utils.shuffle(users, posItems)
-
-    user_pos_items = dataset.user_pos_items
-
-    # minibatch data training
-    batch_size = config["train_batch"]
-    total_batch = len(users) // batch_size + 1
-    aver_loss = 0.0
-
-    # 1. the padding positive items
-    # 2. the users arrange to make minibatch run
-    generator = torch.Generator(device=device)
-    generator.manual_seed(seed)
-
-    iter_num = epoch * total_batch
-    for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
-        batch_users = batch_users.cuda(non_blocking=True)
-        batch_pos = batch_pos.cuda(non_blocking=True)
-
-
-        batch_user_pos = user_pos_items[batch_users]
-
-        batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
-        batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
-        batch_quantile_neg = torch.multinomial(batch_not_interaction_tensor, 
-        config["num_quantile_negative_items"], replacement=True,generator=generator)
-
-        loss.quantile_setp(users = batch_users, user_pos=batch_user_pos, neg = batch_quantile_neg)
-        cri = loss.precision_step(batch_users, batch_pos, batch_neg, epoch, batch_id)
-        w.add_scalar("Loss", cri, iter_num + batch_id)
-        aver_loss += cri
-        # iter_num += 1     
-        
-
-    aver_loss = aver_loss / total_batch
-    # w.add_scalar("Loss", aver_loss, epoch)
-
-    aver_diff_loss = 0
-    if config["diff_margin_and_topk"]:
-        with torch.no_grad():
-            for batch_id, batch_users in enumerate(utils.minibatch( torch.arange(0, dataset.n_users) , batch_size=batch_size) ):
-                cri = loss.check_diff_margin_and_topk(batch_users)
-                aver_diff_loss += cri
-                w.add_scalar("diff_margin_topk", cri, iter_num + batch_id)
-
-    # aver_diff_loss = aver_diff_loss / dataset.n_users
-
-    time_one_epoch = int(time.time() - start)
-    return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
-
-def Train_adv_original(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, flag = True):
-    Recmodel = recommend_model
-    Recmodel.train()
-    loss: utils.LossFunc = loss_class
-
-    start = time.time()
-    if config["full_batch"]:
-        # This means set batch size equals to interaction size
-        # This can make the training process fast, however the memory of GPU should be enough
-        S = utils.UniformSample_original(dataset, config["num_negative_items"])
-        users, posItems, negItems = S
-        users, posItems, negItems = utils.shuffle(users, posItems, negItems)
-    else:
-        users, posItems = dataset.trainUser_tensor, dataset.trainItem_tensor
-        users, posItems = utils.shuffle(users, posItems)
-
-    if config["full_batch"]:
-        users = users.cuda(non_blocking=True)
-        posItems = posItems.cuda(non_blocking=True)
-        negItems = negItems.cuda(non_blocking=True)
-
-        batch_size = len(users)
-        aver_loss = loss.step(users, posItems, negItems, epoch)
-        w.add_scalar(f"BPRLoss/BPR", aver_loss, epoch)
-    else:
-        batch_size = config["train_batch"]
-        total_batch = len(users) // batch_size + 1
-        aver_loss = 0.0
-
-        iter_num = epoch * total_batch
-        for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
-            batch_users = batch_users.cuda(non_blocking=True)
-            batch_pos = batch_pos.cuda(non_blocking=True)
-
-            batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
-            batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
-            cri = loss.adv_step(batch_users, batch_pos, batch_neg, epoch, batch_id, flag)
-            w.add_scalar("Loss", cri, iter_num + batch_id)
-            aver_loss += cri
-            # iter_num += 1
-
-        aver_loss = aver_loss / total_batch
-        # w.add_scalar("Loss", aver_loss, epoch)
-    time_one_epoch = int(time.time() - start)
-    return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
-
-def Train_original(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None):
-    Recmodel = recommend_model
-    Recmodel.train()
-    loss: utils.LossFunc = loss_class
-
-    start = time.time()
-    if config["full_batch"]:
-        # This means set batch size equals to interaction size
-        # This can make the training process fast, however the memory of GPU should be enough
-        S = utils.UniformSample_original(dataset, config["num_negative_items"])
-        users, posItems, negItems = S
-        users, posItems, negItems = utils.shuffle(users, posItems, negItems)
-    else:
-        users, posItems = dataset.trainUser_tensor, dataset.trainItem_tensor
-        users, posItems = utils.shuffle(users, posItems)
-
-    if config["full_batch"]:
-        users = users.cuda(non_blocking=True)
-        posItems = posItems.cuda(non_blocking=True)
-        negItems = negItems.cuda(non_blocking=True)
-
-        batch_size = len(users)
-        aver_loss = loss.step(users, posItems, negItems, epoch)
-        w.add_scalar(f"BPRLoss/BPR", aver_loss, epoch)
-    else:
-        batch_size = config["train_batch"]
-        total_batch = len(users) // batch_size + 1
-        aver_loss = 0.0
-
-        iter_num = epoch * total_batch
-        for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
-            batch_users = batch_users.cuda(non_blocking=True)
-            batch_pos = batch_pos.cuda(non_blocking=True)
-
-            batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
-            batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
-            cri = loss.step(batch_users, batch_pos, batch_neg, epoch, batch_id)
-            w.add_scalar("Loss", cri, iter_num + batch_id)
-            aver_loss += cri
-            # iter_num += 1
-
-        aver_loss = aver_loss / total_batch
         # w.add_scalar("Loss", aver_loss, epoch)
     time_one_epoch = int(time.time() - start)
     return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
