@@ -53,7 +53,14 @@ class PreAtKOptimizer(IROptimizer):
         return loss, emb_loss
 
 
-    def step(self, user, pos, neg, topk_quantile):
+    def step(self, user, pos, neg):
+        
+        # First stage,  compute the Top-K quantile.
+        topk_quantile = None
+        with torch.no_grad():
+            topk_quantile = self.compute_topks(users = user)
+
+        # Second stage, compute the loss 
         ssm_loss,emb_loss = self.cal_loss_graph(user, pos, neg, topk_quantile)
         loss = ssm_loss + emb_loss
         self.optimizer_descent.zero_grad()

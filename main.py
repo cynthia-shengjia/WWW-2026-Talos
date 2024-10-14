@@ -43,7 +43,8 @@ MODELS = {
 }
 LOSSES = {
     "llpauc": optimizer.optim_LLPAUC.LLPAUCOptimizer,
-    'softmax': optimizer.optim_Softmax.SoftmaxOptimizer
+    'softmax': optimizer.optim_Softmax.SoftmaxOptimizer,
+    "topk_loss": optimizer.optim_PreAtK.PreAtKOptimizer
 }
 
 if world.config["loss"] == "bpr" or world.config["loss"] == "bce" or world.config["loss"] == "rmse":
