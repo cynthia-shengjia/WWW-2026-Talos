@@ -44,7 +44,8 @@ MODELS = {
 LOSSES = {
     "llpauc": optimizer.optim_LLPAUC.LLPAUCOptimizer,
     'softmax': optimizer.optim_Softmax.SoftmaxOptimizer,
-    "topk_loss": optimizer.optim_PreAtK.PreAtKOptimizer
+    "topk_loss": optimizer.optim_PreAtK.PreAtKOptimizer,
+    "advInfoNCE": optimizer.optim_AdvInfoNCE.AdvInfoNCEModel
 }
 
 if world.config["loss"] == "bpr" or world.config["loss"] == "bce" or world.config["loss"] == "rmse":
@@ -150,7 +151,14 @@ for epoch in range(world.TRAIN_epochs):
             )
         print(valid_res)
 
-    output_information = procedure.Train(dataset, Recmodel, loss_func, epoch, world.config, w=w)
+    output_information = procedure.Train(
+        dataset = dataset, 
+        recommend_model = Recmodel, 
+        loss_class = loss_func, 
+        epoch = epoch, 
+        config = world.config, 
+        w=w
+    )
     print(f"EPOCH[{epoch + 1}/{world.TRAIN_epochs}] {output_information}")
 
 print(

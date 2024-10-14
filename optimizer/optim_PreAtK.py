@@ -53,7 +53,7 @@ class PreAtKOptimizer(IROptimizer):
         return loss, emb_loss
 
 
-    def step(self, user, pos, neg):
+    def step(self, user, pos, neg, epoch = None):
         
         # First stage,  compute the Top-K quantile.
         topk_quantile = None

@@ -89,7 +89,7 @@ class LLPAUCOptimizer(IROptimizer):
 
         return loss, emb_loss
 
-    def step(self, user, pos, neg):
+    def step(self, user, pos, neg, epoch = None):
         llpauc_loss,emb_loss = self.cal_loss_graph(user, pos, neg)
         loss = llpauc_loss + emb_loss
         self.optimizer_descent.zero_grad()

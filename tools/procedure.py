@@ -35,10 +35,12 @@ def Train(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config
 
         batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
         batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
-        cri = loss.step(batch_users, batch_pos, batch_neg)
+        cri = loss.step(batch_users, batch_pos, batch_neg,epoch)
         w.add_scalar("Loss", cri, iter_num + batch_id)
         aver_loss += cri
-        # iter_num += 1
+    
+    if config["loss"] == "advInfoNCE":
+        loss.eta_epoch -= 1
 
     aver_loss = aver_loss / total_batch
         # w.add_scalar("Loss", aver_loss, epoch)
