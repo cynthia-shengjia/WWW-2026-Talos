@@ -86,8 +86,13 @@ class AdvInfoNCEModel(IROptimizer):
         emb_loss, reg_loss_prob = self.regularize(users_emb, pos_emb, neg_emb, users_p_emb, neg_p_emb)
         emb_loss                = self.weight_decay * emb_loss      / batch_size
         reg_loss_prob           = self.weight_decay * reg_loss_prob / batch_size 
-
-        return loss, emb_loss, reg_loss_prob
+        additional_loss         =  self.model.additional_loss(
+                                    usr_idx = users.long(), 
+                                    pos_idx = pos.long(), 
+                                    embedding_user = embedding_user, 
+                                    embedding_item = embedding_item
+                                )
+        return loss, emb_loss + additional_loss, reg_loss_prob + additional_loss
 
 
     def step(self, user, pos, neg, epoch, adv_training_flag):

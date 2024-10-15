@@ -47,10 +47,15 @@ class SoftmaxOptimizer(IROptimizer):
         neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
         y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
 
-        loss = self.cal_loss(y_pred)
-        emb_loss = self.weight_decay * self.regularize(users_emb, pos_emb, neg_emb) / batch_size
-
-        return loss, emb_loss
+        loss            =  self.cal_loss(y_pred)
+        emb_loss        =  self.weight_decay * self.regularize(users_emb, pos_emb, neg_emb) / batch_size
+        additional_loss =  self.model.additional_loss(
+                                usr_idx = users.long(), 
+                                pos_idx = pos.long(), 
+                                embedding_user = embedding_user, 
+                                embedding_item = embedding_item
+                            )
+        return loss, emb_loss + additional_loss
 
     def step(self, user, pos, neg):
         ssm_loss,emb_loss = self.cal_loss_graph(user, pos, neg)

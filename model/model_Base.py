@@ -21,6 +21,11 @@ class IRModel(nn.Module,ABC):
     @abstractmethod
     def compute(self):
         return NotImplemented
+    
+    @abstractmethod
+    def additional_loss(*args, **kwargs):
+        return NotImplemented
+
 
     def getUsersRating(self, users: torch.Tensor) -> torch.Tensor:
         embedding_user, embedding_item = self.compute()

@@ -24,3 +24,6 @@ class MFModel(IRModel):
             items_emb = F.normalize(input = items_emb, p = 2, dim = 1)
 
         return users_emb, items_emb
+    
+    def additional_loss(*args, **kwargs):
+        return 0

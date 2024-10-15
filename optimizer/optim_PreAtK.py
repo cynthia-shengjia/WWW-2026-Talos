@@ -50,7 +50,13 @@ class PreAtKOptimizer(IROptimizer):
 
         loss = self.cal_loss(y_pred,quantile)
         emb_loss = self.weight_decay * self.regularize(users_emb, pos_emb, neg_emb) / batch_size
-        return loss, emb_loss
+        additional_loss =  self.model.additional_loss(
+                        usr_idx = users.long(), 
+                        pos_idx = pos.long(), 
+                        embedding_user = embedding_user, 
+                        embedding_item = embedding_item
+                    )
+        return loss, emb_loss + additional_loss
 
 
     def step(self, user, pos, neg):

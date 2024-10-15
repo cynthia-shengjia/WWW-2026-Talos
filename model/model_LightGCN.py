@@ -50,3 +50,6 @@ class LightGCNModel(IRModel):
 
 
         return users, items
+
+    def additional_loss(*args, **kwargs):
+        return 0
