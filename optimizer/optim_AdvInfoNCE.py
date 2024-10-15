@@ -4,7 +4,7 @@ import torch
 
 
 
-class AdvInfoNCEModel(IROptimizer):
+class AdvInfoNCEOptimizer(IROptimizer):
     def __init__(self, model, config):
         super().__init__()
 
