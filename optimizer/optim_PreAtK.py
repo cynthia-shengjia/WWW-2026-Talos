@@ -53,7 +53,7 @@ class PreAtKOptimizer(IROptimizer):
         return loss, emb_loss
 
 
-    def step(self, user, pos, neg, epoch = None):
+    def step(self, user, pos, neg):
         
         # First stage,  compute the Top-K quantile.
         topk_quantile = None
@@ -79,3 +79,7 @@ class PreAtKOptimizer(IROptimizer):
         users_emb = embedding_user[users.long()]
         scores = users_emb @ embedding_item.T
         return (torch.topk(input = scores, dim = 1, k = self.lambda_k)[0][:,-1]).unsqueeze(dim = 1)
+
+    def save(self,path):
+        all_states = self.model.state_dict()
+        torch.save(obj = all_states, f = path)

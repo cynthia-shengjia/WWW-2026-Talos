@@ -89,7 +89,7 @@ class LLPAUCOptimizer(IROptimizer):
 
         return loss, emb_loss
 
-    def step(self, user, pos, neg, epoch = None):
+    def step(self, user, pos, neg):
         llpauc_loss,emb_loss = self.cal_loss_graph(user, pos, neg)
         loss = llpauc_loss + emb_loss
         self.optimizer_descent.zero_grad()
@@ -101,3 +101,16 @@ class LLPAUCOptimizer(IROptimizer):
         self.optimizer_descent.step()
         return llpauc_loss.cpu().item()
 
+    def save(self, path):
+        all_states = self.model.state_dict()
+
+        all_states.update({
+            "a":        self.a.detach(),
+            "b":        self.b.detach(),
+            "gamma":    self.gamma.detach(),
+            "sn":       self.sn.detach(),
+            "theta_b":  self.theta_b.detach(),
+            "theta_a":  self.theta_a.detach()
+        })
+        
+        torch.save(obj = all_states, f = path)

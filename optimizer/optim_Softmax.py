@@ -52,7 +52,7 @@ class SoftmaxOptimizer(IROptimizer):
 
         return loss, emb_loss
 
-    def step(self, user, pos, neg, epoch = None):
+    def step(self, user, pos, neg):
         ssm_loss,emb_loss = self.cal_loss_graph(user, pos, neg)
         loss = ssm_loss + emb_loss
         self.optimizer_descent.zero_grad()
@@ -61,3 +61,8 @@ class SoftmaxOptimizer(IROptimizer):
 
         self.optimizer_descent.step()
         return ssm_loss.cpu().item()
+    
+    def save(self,path):
+        all_states = self.model.state_dict()
+        torch.save(obj = all_states, f = path)
+

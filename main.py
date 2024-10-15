@@ -56,6 +56,7 @@ Recmodel = MODELS[world.model_name](config=world.config, num_users=dataset.n_use
                                     Graph=dataset.Graph).cuda()
 loss_func = LOSSES[world.config["loss"]](model=Recmodel, config=world.config)
 
+
 if "NNI_PLATFORM" in os.environ:
     save_dir = os.path.join(os.environ["NNI_OUTPUT_DIR"], "tensorboard")
     print("save_dir: ", save_dir)
@@ -129,8 +130,7 @@ for epoch in range(world.TRAIN_epochs):
         if valid_recall[0] > best_recall[0] + 0.0001:
             patience = 0
             if "NNI_PLATFORM" not in os.environ:
-                torch.save(Recmodel.state_dict(), os.path.join(save_dir, "best_model.pth"))
-            # best_Recmodel = Recmodel
+                loss_func.save(os.path.join(save_dir, "best_model.pth"))
             best_Recmodel.load_state_dict(Recmodel.state_dict())
         else:
             patience += 1

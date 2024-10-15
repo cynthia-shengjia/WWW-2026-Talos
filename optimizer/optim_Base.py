@@ -19,4 +19,8 @@ class IROptimizer(ABC):
     @abstractmethod
     def cal_loss_graph(self,*args,**kwargs):
         return NotImplemented
+    
+    @abstractmethod
+    def save(self, path):
+        return NotImplemented
 
