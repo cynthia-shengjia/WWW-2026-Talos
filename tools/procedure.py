@@ -13,6 +13,7 @@ from tools.world import cprint
 CORES = multiprocessing.cpu_count() // 2  # 4090服务器上有256个核心
 
 
+
 def Train(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None):
     Recmodel = recommend_model
     Recmodel.train()
@@ -35,12 +36,10 @@ def Train(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config
 
         batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
         batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
-        cri = loss.step(batch_users, batch_pos, batch_neg,epoch)
+        cri = loss.step(batch_users, batch_pos, batch_neg)
         w.add_scalar("Loss", cri, iter_num + batch_id)
         aver_loss += cri
-    
-    if config["loss"] == "advInfoNCE":
-        loss.eta_epoch -= 1
+
 
     aver_loss = aver_loss / total_batch
         # w.add_scalar("Loss", aver_loss, epoch)
@@ -239,3 +238,40 @@ def Valid(dataset, Recmodel, epoch, w=None, multicore=0):
             pool.close()
 
         return results
+
+
+#  ============== The AdvInfoNCE Trainer ===============
+def TrainAdvInfoNCE(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None, adv_training_flag = False):
+    Recmodel = recommend_model
+    Recmodel.train()
+    loss = loss_class
+
+    start = time.time()
+
+    users, posItems = dataset.trainUser_tensor, dataset.trainItem_tensor
+    users, posItems = utils.shuffle(users, posItems)
+
+
+    batch_size = config["train_batch"]
+    total_batch = len(users) // batch_size + 1
+    aver_loss = 0.0
+
+    iter_num = epoch * total_batch
+
+    for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
+        batch_users = batch_users.cuda(non_blocking=True)
+        batch_pos = batch_pos.cuda(non_blocking=True)
+
+        batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
+        batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
+        cri = loss.step(batch_users, batch_pos, batch_neg,epoch, adv_training_flag = adv_training_flag)
+        w.add_scalar("Loss", cri, iter_num + batch_id)
+        aver_loss += cri
+    
+
+
+
+    aver_loss = aver_loss / total_batch
+        # w.add_scalar("Loss", aver_loss, epoch)
+    time_one_epoch = int(time.time() - start)
+    return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
