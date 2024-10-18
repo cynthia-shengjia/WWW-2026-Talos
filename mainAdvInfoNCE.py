@@ -39,7 +39,9 @@ dataset = dataloader.Loader(path=dataroot)
 
 MODELS = {
     "mf": model.model_MF.MFModel,
-    "lgn": model.model_LightGCN.LightGCNModel
+    "lgn": model.model_LightGCN.LightGCNModel,
+    "XSimGCL": model.model_XSimGCL.XSimGCLModel
+
 }
 LOSSES = {
     "llpauc": optimizer.optim_LLPAUC.LLPAUCOptimizer,
