@@ -16,18 +16,22 @@ class PreAtKOptimizer(IROptimizer):
 
         self.lambda_k       = config["lambda_k"]
 
+        self.activation     = lambda x: torch.log( torch.tanh(x) + 1 )
+
         # === Model Optimizer ===
         self.optimizer_descent = torch.optim.Adam(self.model.parameters(), lr = self.lr)
+        self.quantile = (torch.zeros((self.model.num_users, 1))).cuda()
+
 
 
     def cal_loss(self, y_pred: torch.Tensor, quantile: torch.Tensor):
         trunc_pos = y_pred[:,0] - quantile.squeeze()
         trunc_neg = y_pred[:,1:] - quantile
 
-        pos_logits = torch.sigmoid(trunc_pos  / self.temp)
-        neg_logits = torch.sigmoid(trunc_neg  / self.temp)
+        pos_logits = torch.log( torch.exp( self.activation(trunc_pos  / self.temp) )    )
+        neg_logits = torch.logsumexp( self.activation(trunc_neg  / self.temp), dim = 1  )
 
-        loss = -torch.log(pos_logits /  neg_logits.sum(dim = 1))
+        loss = neg_logits - pos_logits
 
         return loss.mean()
 
@@ -62,9 +66,7 @@ class PreAtKOptimizer(IROptimizer):
     def step(self, user, pos, neg):
         
         # First stage,  compute the Top-K quantile.
-        topk_quantile = None
-        with torch.no_grad():
-            topk_quantile = self.compute_topks(users = user)
+        topk_quantile = self.quantile[user.long()]
 
         # Second stage, compute the loss 
         ssm_loss,emb_loss = self.cal_loss_graph(user, pos, neg, topk_quantile)
@@ -84,7 +86,7 @@ class PreAtKOptimizer(IROptimizer):
         embedding_user, embedding_item = self.model.compute()
         users_emb = embedding_user[users.long()]
         scores = users_emb @ embedding_item.T
-        return (torch.topk(input = scores, dim = 1, k = self.lambda_k)[0][:,-1]).unsqueeze(dim = 1)
+        self.quantile[users.long()] = (torch.topk(input = scores, dim = 1, k = self.lambda_k)[0][:,-1]).unsqueeze(dim = 1)
 
     def save(self,path):
         all_states = self.model.state_dict()
