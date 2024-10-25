@@ -28,10 +28,15 @@ class PreAtKOptimizer(IROptimizer):
         trunc_pos = y_pred[:,0] - quantile.squeeze()
         trunc_neg = y_pred[:,1:] - quantile
 
-        pos_logits = torch.log( torch.exp( self.activation(trunc_pos  / self.temp) )    )
-        neg_logits = torch.logsumexp( self.activation(trunc_neg  / self.temp), dim = 1  )
+        pos_logits = torch.log( torch.exp( self.activation(trunc_pos)   / self.temp)        )
+        neg_logits = torch.logsumexp( self.activation(trunc_neg )  / self.temp, dim = 1     )
 
         loss = neg_logits - pos_logits
+        # pos_logits = self.activation(trunc_pos) / self.temp
+        # neg_logits = self.activation(trunc_neg)  / self.temp
+        # pos_part = torch.exp(pos_logits)
+        # neg_part = torch.logsumexp(neg_logits, dim = 1)
+        # loss = neg_part - torch.log(pos_part)
 
         return loss.mean()
 
