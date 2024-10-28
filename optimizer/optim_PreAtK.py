@@ -88,6 +88,37 @@ class PreAtKOptimizer(IROptimizer):
         scores = users_emb @ embedding_item.T
         self.quantile[users.long()] = (torch.topk(input = scores, dim = 1, k = self.lambda_k)[0][:,-1]).unsqueeze(dim = 1)
 
+    def estimate_topks(self, users, pos, neg):
+        """
+            Using All Positive Items and Sampled Negative Items to Estimate
+        """
+        embedding_user, embedding_item = self.model.compute()                                               # user and item embeddings
+
+        embedding_item_add = torch.cat( ( embedding_item, torch.zeros(1, self.model.latent_dim).cuda()) )   # padding
+
+        users_emb = embedding_user[users.long()]        # (B,dim)
+        pos_emb = embedding_item_add[pos]               # (B,PadSize,dim)
+        neg_emb = embedding_item[neg.long()]            # (B,PadSize,dim)
+
+
+
+        pos_scores = torch.bmm(users_emb.unsqueeze(1), pos_emb.transpose(1, 2)).squeeze(1)
+        neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
+
+
+        pos_check   =  torch.not_equal(pos, torch.full_like(pos, self.model.num_items).to(torch.int64))
+
+        
+        padding_all_scores  =  torch.cat( (self.model.f(pos_scores) * pos_check, self.model.f(neg_scores)), dim = 1 )
+        all_scores          =  torch.cat( (pos_scores, neg_scores)                            , dim = 1 )
+
+
+        _,topk_index        =  torch.topk( input = padding_all_scores, dim = 1, k = self.lambda_k       )
+
+        self.quantile[users.long()] = torch.gather(input = all_scores, dim = 1, index = topk_index[:, -1].unsqueeze(dim = 1)          )
+        
+
+
     def save(self,path):
         all_states = self.model.state_dict()
         torch.save(obj = all_states, f = path)

@@ -84,6 +84,9 @@ def TopKTrain(dataset: dataloader.Loader, recommend_model, loss_class, epoch, co
     time_one_epoch = int(time.time() - start)
     return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
 
+
+
+
 def valid_one_batch(X):
     sorted_items = X[0].numpy()
     groundTrue = X[1]
@@ -305,6 +308,56 @@ def TrainAdvInfoNCE(dataset: dataloader.Loader, recommend_model, loss_class, epo
         aver_loss += cri
     
 
+
+
+    aver_loss = aver_loss / total_batch
+        # w.add_scalar("Loss", aver_loss, epoch)
+    time_one_epoch = int(time.time() - start)
+    return f"Loss{aver_loss:.3f}-Time{time_one_epoch}"
+
+
+
+
+
+def TETrain(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None):
+    Recmodel = recommend_model
+    Recmodel.train()
+    loss = loss_class
+
+    start = time.time()
+
+    users, posItems = dataset.trainUser_tensor, dataset.trainItem_tensor
+    users, posItems = utils.shuffle(users, posItems)
+
+
+    batch_size = config["train_batch"]
+    total_batch = len(users) // batch_size + 1
+    aver_loss = 0.0
+
+    iter_num    = epoch * total_batch
+    generator   = torch.Generator(device = torch.device("cuda"))
+    generator.manual_seed(2024)
+
+    if (epoch + 5) % 5 == 0:
+        with torch.no_grad():
+            for batch_id, batch_users in enumerate(utils.minibatch(torch.arange(Recmodel.num_users), batch_size = batch_size)):
+                
+                batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
+                batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)     # sampled ngative items
+
+                batch_all_pos = dataset.user_pos_items[batch_users]                                                              # user's all postive items (padding with |I| + 1)
+                loss.estimate_topks(batch_users, batch_all_pos, batch_neg)
+    
+
+    for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
+        batch_users = batch_users.cuda(non_blocking=True)
+        batch_pos = batch_pos.cuda(non_blocking=True)
+
+        batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
+        batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
+        cri = loss.step(batch_users, batch_pos, batch_neg)
+        w.add_scalar("Loss", cri, iter_num + batch_id)
+        aver_loss += cri
 
 
     aver_loss = aver_loss / total_batch
