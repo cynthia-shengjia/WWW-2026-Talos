@@ -13,16 +13,19 @@ class BSLOptimizer(IROptimizer):
         self.lr             = config['lr']
         self.weight_decay   = config["weight_decay"]
         
-        self.temp           = config['ssm_temp']
-        self.neg_weight     = config["neg_coefficient"]
+        self.temp1           = config['ssm_temp']
+        self.temp2           = config['ssm_temp2']
+
+        # ====== Optimizer Oher Parameters ==========
+        self.neg_weight     = self.temp2 / self.temp1
 
         # === Model Optimizer ===
         self.optimizer_descent = torch.optim.Adam(self.model.parameters(), lr = self.lr)
 
     def cal_loss(self, y_pred, users):
         # clip parameter
-        pos_logits = torch.exp(self.neg_weight * y_pred[:, 0] / self.temp)
-        neg_logits = torch.exp(y_pred[:, 1:] / self.temp)
+        pos_logits = torch.exp(y_pred[:, 0] /  self.temp1 )
+        neg_logits = torch.exp(y_pred[:, 1:] / self.temp2 )
 
         user = users.contiguous().view(-1, 1)
         mask = torch.eq(user, user.T).float()
