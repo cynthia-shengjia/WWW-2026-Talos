@@ -343,7 +343,13 @@ def TETrain(dataset: dataloader.Loader, recommend_model, loss_class, epoch, conf
             for batch_id, batch_users in enumerate(utils.minibatch(torch.arange(Recmodel.num_users), batch_size = batch_size)):
                 
                 batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
-                batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)     # sampled ngative items
+                
+                batch_neg = torch.multinomial(
+                    batch_not_interaction_tensor, 
+                    config["num_negative_items"], 
+                    replacement=True, 
+                    generator = generator
+                )     # sampled ngative items
 
                 batch_all_pos = dataset.user_pos_items[batch_users]                                                              # user's all postive items (padding with |I| + 1)
                 loss.estimate_topks(batch_users, batch_all_pos, batch_neg)
