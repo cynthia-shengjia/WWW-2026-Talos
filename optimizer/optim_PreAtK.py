@@ -121,4 +121,7 @@ class PreAtKOptimizer(IROptimizer):
 
     def save(self,path):
         all_states = self.model.state_dict()
+        all_states.update({
+            "quantile": self.quantile.detach()
+        })
         torch.save(obj = all_states, f = path)
