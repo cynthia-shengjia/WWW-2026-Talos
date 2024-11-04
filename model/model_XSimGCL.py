@@ -41,8 +41,9 @@ class XSimGCLModel(IRModel):
 
         for k in range(self.n_layers):
             all_emb = torch.sparse.mm(self.Graph, all_emb)
-            random_noise = torch.rand_like(all_emb, device="cuda")
-            all_emb += torch.sign(all_emb) * F.normalize(random_noise, dim=-1) * self.noise_modulus
+            if self.training:
+                random_noise = torch.rand_like(all_emb, device="cuda")
+                all_emb += torch.sign(all_emb) * F.normalize(random_noise, dim=-1) * self.noise_modulus
             embs.append(all_emb)
 
             if k == self.contrastive_layer:
