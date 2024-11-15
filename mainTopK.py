@@ -43,13 +43,8 @@ MODELS = {
     "XSimGCL": model.model_XSimGCL.XSimGCLModel
 }
 LOSSES = {
-    "llpauc": optimizer.optim_LLPAUC.LLPAUCOptimizer,
-    'softmax': optimizer.optim_Softmax.SoftmaxOptimizer,
     "topk_loss": optimizer.optim_PreAtK.PreAtKOptimizer,
-    "advInfoNCE": optimizer.optim_AdvInfoNCE.AdvInfoNCEOptimizer,
-    "BSL": optimizer.optim_BSL.BSLOptimizer,
-    "bpr": optimizer.optim_BPR.BPROptimizer,
-    "DrRL": optimizer.optim_DrRL.DrRLOptimizer
+    "exp_sigmoid":  optimizer.optim_ExpSig.ExpSigOptimizer
 }
 
 if world.config["loss"] == "bpr" or world.config["loss"] == "bce" or world.config["loss"] == "rmse":

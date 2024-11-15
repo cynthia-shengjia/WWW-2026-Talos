@@ -2,7 +2,7 @@ from torch import nn
 from optimizer.optim_Base import IROptimizer
 import torch
 
-class PreAtKOptimizer(IROptimizer):
+class ExpSigOptimizer(IROptimizer):
     def __init__(self, model, config):
         super().__init__()
 
@@ -13,19 +13,13 @@ class PreAtKOptimizer(IROptimizer):
         self.lr             = config["lr"]
         self.weight_decay   = config["weight_decay"]
         self.temp           = config["ssm_temp"]
+        self.temp2          = config["ssm_temp2"]
+        self.mode           = config["mode"]
 
         self.lambda_k       = config["lambda_k"]
 
-        self.mode           = config["mode"]
-
-        # activation function
-        act_dict = {
-            "tanh":     lambda x: torch.log( torch.tanh(x) + 1 ),
-            "sigmoid":  lambda x: torch.log( torch.tanh(x) + 1 )
-        }
-
-        self.activation  = act_dict[config["activate_func"]]
-
+        self.activation     = lambda x: torch.log( torch.sigmoid(x)  )
+        self.activation2    = lambda x: torch.log( torch.exp(x)      )
 
         # === Model Optimizer ===
         self.optimizer_descent = torch.optim.Adam(self.model.parameters(), lr = self.lr)
@@ -33,19 +27,15 @@ class PreAtKOptimizer(IROptimizer):
 
 
 
-    def cal_loss(self, users, y_pred: torch.Tensor, quantile: torch.Tensor):
+    def cal_loss(self, y_pred: torch.Tensor, quantile: torch.Tensor):
         trunc_pos = y_pred[:,0] - quantile.squeeze()
         trunc_neg = y_pred[:,1:] - quantile
-
-        if self.mode == "multi":
-            user = users.contiguous().view(-1, 1)
-            mask = torch.eq(user, user.T).float()
-            pos_logits = (torch.exp( self.activation(trunc_pos)   / self.temp)).unsqueeze(0) * mask
-            pos_logits = torch.log(pos_logits.sum(dim = 1))
-        else:
-            pos_logits = torch.log( torch.exp( self.activation(trunc_pos)   / self.temp)        )
-        
-        neg_logits = torch.logsumexp( self.activation(trunc_neg )  / self.temp, dim = 1     )
+        if self.mode == "outside":
+            pos_logits = torch.log( torch.exp( self.activation(trunc_pos)   / self.temp2)        )
+            neg_logits = torch.logsumexp( self.activation2(trunc_neg )  / self.temp, dim = 1     )
+        elif self.mode == "inner":
+            pos_logits = torch.log( torch.exp( self.activation(trunc_pos / self.temp2)   )       )
+            neg_logits = torch.logsumexp( self.activation2(trunc_neg )  / self.temp, dim = 1     )
 
         loss = neg_logits - pos_logits
 
@@ -68,7 +58,7 @@ class PreAtKOptimizer(IROptimizer):
         neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
         y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
 
-        loss = self.cal_loss(users, y_pred,quantile)
+        loss = self.cal_loss(y_pred,quantile)
         emb_loss = self.weight_decay * self.regularize(users_emb, pos_emb, neg_emb) / batch_size
         additional_loss =  self.model.additional_loss(
                         usr_idx = users.long(), 
