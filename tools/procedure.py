@@ -319,7 +319,7 @@ def TrainAdvInfoNCE(dataset: dataloader.Loader, recommend_model, loss_class, epo
 
 
 
-def TETrain(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None):
+def TQTrain(dataset: dataloader.Loader, recommend_model, loss_class, epoch, config, w=None):
     Recmodel = recommend_model
     Recmodel.train()
     loss = loss_class
@@ -335,25 +335,7 @@ def TETrain(dataset: dataloader.Loader, recommend_model, loss_class, epoch, conf
     aver_loss = 0.0
 
     iter_num    = epoch * total_batch
-    generator   = torch.Generator(device = torch.device("cuda"))
-    generator.manual_seed(2024)
 
-    if (epoch + 5) % 5 == 0:
-        with torch.no_grad():
-            for batch_id, batch_users in enumerate(utils.minibatch(torch.arange(Recmodel.num_users), batch_size = batch_size)):
-                
-                batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
-                
-                batch_neg = torch.multinomial(
-                    batch_not_interaction_tensor, 
-                    config["num_negative_items"], 
-                    replacement=True, 
-                    generator = generator
-                )     # sampled ngative items
-
-                batch_all_pos = dataset.user_pos_items[batch_users]                                                              # user's all postive items (padding with |I| + 1)
-                loss.estimate_topks(batch_users, batch_all_pos, batch_neg)
-    
 
     for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
         batch_users = batch_users.cuda(non_blocking=True)
@@ -361,7 +343,9 @@ def TETrain(dataset: dataloader.Loader, recommend_model, loss_class, epoch, conf
 
         batch_not_interaction_tensor = (~dataset.interaction_tensor[batch_users]).float()
         batch_neg = torch.multinomial(batch_not_interaction_tensor, config["num_negative_items"], replacement=True)
-        cri = loss.step(batch_users, batch_pos, batch_neg)
+        batch_all_pos = dataset.user_pos_items[batch_users]  
+
+        cri = loss.step(user = batch_users, pos = batch_pos, user_all_pos = batch_all_pos, neg = batch_neg)
         w.add_scalar("Loss", cri, iter_num + batch_id)
         aver_loss += cri
 

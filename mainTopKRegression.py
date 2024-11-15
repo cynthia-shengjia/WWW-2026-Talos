@@ -43,13 +43,7 @@ MODELS = {
     "XSimGCL": model.model_XSimGCL.XSimGCLModel
 }
 LOSSES = {
-    "llpauc": optimizer.optim_LLPAUC.LLPAUCOptimizer,
-    'softmax': optimizer.optim_Softmax.SoftmaxOptimizer,
-    "topk_loss": optimizer.optim_PreAtK.PreAtKOptimizer,
-    "advInfoNCE": optimizer.optim_AdvInfoNCE.AdvInfoNCEOptimizer,
-    "BSL": optimizer.optim_BSL.BSLOptimizer,
-    "bpr": optimizer.optim_BPR.BPROptimizer,
-    "DrRL": optimizer.optim_DrRL.DrRLOptimizer
+    "topk_loss_regression": optimizer.optim_QR.ExpOptimizer
 }
 
 if world.config["loss"] == "bpr" or world.config["loss"] == "bce" or world.config["loss"] == "rmse":
@@ -155,7 +149,7 @@ for epoch in range(world.TRAIN_epochs):
             )
         print(valid_res)
 
-    output_information = procedure.TETrain(
+    output_information = procedure.TQTrain(
         dataset = dataset, 
         recommend_model = Recmodel, 
         loss_class = loss_func, 

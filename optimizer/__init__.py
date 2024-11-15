@@ -9,3 +9,4 @@ from optimizer.optim_DrRL import *
 from optimizer.optim_CCL import *
 from optimizer.optim_ExpSig import *
 from optimizer.optim_SigExp import *
+from optimizer.optim_QR import *
