@@ -21,7 +21,7 @@ class PreAtKOptimizer(IROptimizer):
         # activation function
         act_dict = {
             "tanh":     lambda x: torch.log( torch.tanh(x) + 1 ),
-            "sigmoid":  lambda x: torch.log( torch.tanh(x) + 1 )
+            "sigmoid":  lambda x: torch.log( torch.sigmoid(x)  )
         }
 
         self.activation  = act_dict[config["activate_func"]]
