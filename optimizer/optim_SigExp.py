@@ -34,8 +34,8 @@ class SigExpOptimizer(IROptimizer):
             pos_logits = torch.log( torch.exp( self.activation2(trunc_pos)   / self.temp2)        )
             neg_logits = torch.logsumexp( self.activation(trunc_neg )  / self.temp, dim = 1     )
         elif self.mode == "inner":
-            pos_logits = torch.log( torch.exp( self.activation2(trunc_pos / self.temp2)   )       )
-            neg_logits = torch.logsumexp( self.activation(trunc_neg )  / self.temp, dim = 1     )
+            pos_logits = torch.log( torch.exp( self.activation2(trunc_pos )  / self.temp2 )       )
+            neg_logits = torch.logsumexp( self.activation(trunc_neg / self.temp )  , dim = 1     )
 
         loss = neg_logits - pos_logits
 

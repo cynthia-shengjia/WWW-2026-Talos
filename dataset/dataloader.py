@@ -79,7 +79,7 @@ class Loader(Dataset):
         # self.pos_dic = self._sample_pos_temp()
         self.interaction_tensor = self.create_interaction_tensor().cuda()
 
-        self.user_pos_items = self.create_user_positive_item().cuda()
+        # self.user_pos_items = self.create_user_positive_item().cuda()
 
 
     def create_user_positive_item(self):
