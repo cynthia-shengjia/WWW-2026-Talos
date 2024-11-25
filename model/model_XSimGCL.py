@@ -24,17 +24,17 @@ class XSimGCLModel(IRModel):
 
 
     def _init_weight(self):
-        self.embedding_user = nn.init.xavier_uniform_(torch.empty(self.num_users,self.latent_dim))
-        self.embedding_item = nn.init.xavier_uniform_(torch.empty(self.num_items,self.latent_dim))
+        self.embedding_user = nn.Embedding(self.num_users,self.latent_dim)
+        self.embedding_item = nn.Embedding(self.num_items,self.latent_dim)
 
-        self.embedding_user = nn.Parameter(self.embedding_user)
-        self.embedding_item = nn.Parameter(self.embedding_item)
+        nn.init.xavier_uniform_(self.embedding_user.weight)
+        nn.init.xavier_uniform_(self.embedding_item.weight)
 
 
 
     def compute(self):
-        users_emb = self.embedding_user
-        items_emb = self.embedding_item
+        users_emb = self.embedding_user.weight
+        items_emb = self.embedding_item.weight
         all_emb = torch.cat([users_emb, items_emb])
         embs = []
 

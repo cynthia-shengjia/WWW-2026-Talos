@@ -9,15 +9,13 @@ class MFModel(IRModel):
         super().__init__(config, num_users, num_items)
         self._init_weight()
     def _init_weight(self):
-        self.embedding_user = nn.init.xavier_uniform_(torch.empty(self.num_users,self.latent_dim))
-        self.embedding_item = nn.init.xavier_uniform_(torch.empty(self.num_items,self.latent_dim))
-        self.embedding_user = nn.Parameter(self.embedding_user)
-        self.embedding_item = nn.Parameter(self.embedding_item)
+        self.embedding_user = nn.Embedding(self.num_users,self.latent_dim)
+        self.embedding_item = nn.Embedding(self.num_items,self.latent_dim)
 
 
     def compute(self):
-        users_emb = self.embedding_user
-        items_emb = self.embedding_item
+        users_emb = self.embedding_user.weight
+        items_emb = self.embedding_item.weight
 
         if self.norm:
             users_emb = F.normalize(input = users_emb, p = 2, dim = 1)
