@@ -33,7 +33,7 @@ class LLPAUCOptimizer(IROptimizer):
             {'params': self.theta_b, 'name': 'lamn', 'lr': self.lr},
             {'params': self.theta_a, 'name': 'lamp', 'lr': self.lr},
             {'params': self.gamma, 'name': 'g', 'lr': self.lr * 2}
-        ])
+        ], weight_decay = self.weight_decay)
 
     def _clip(self) -> None:
         self.a.data.clamp_(min = 0, max = 1)
@@ -59,18 +59,6 @@ class LLPAUCOptimizer(IROptimizer):
         )
         return loss
 
-    def regularize(self,users_emb, pos_emb, neg_emb):
-        regularize = (torch.norm(users_emb[:, :]) ** 2
-                      + torch.norm(pos_emb[:, :]) ** 2
-                      + torch.norm(neg_emb[:, :]) ** 2
-                      + torch.norm(self.a) ** 2
-                      + torch.norm(self.b) ** 2
-                      + torch.norm(self.gamma) ** 2
-                      + torch.norm(self.theta_a) ** 2
-                      + torch.norm(self.theta_b) ** 2
-                      + torch.norm(self.sp) ** 2
-                      + torch.norm(self.sn) ** 2) / 2  # take hop=0
-        return regularize
 
     def cal_loss_graph(self, users, pos, neg):
         embedding_user, embedding_item = self.model.compute()
@@ -85,7 +73,6 @@ class LLPAUCOptimizer(IROptimizer):
         y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
 
         loss            =  self.cal_loss(y_pred)
-        emb_loss        =  self.weight_decay * self.regularize(users_emb, pos_emb, neg_emb) / batch_size
         additional_loss =  self.model.additional_loss(
                         usr_idx = users.long(), 
                         pos_idx = pos.long(), 
@@ -93,11 +80,11 @@ class LLPAUCOptimizer(IROptimizer):
                         embedding_item = embedding_item
                     )
 
-        return loss, emb_loss + additional_loss
+        return loss, additional_loss
 
     def step(self, user, pos, neg):
-        llpauc_loss,emb_loss = self.cal_loss_graph(user, pos, neg)
-        loss = llpauc_loss + emb_loss
+        llpauc_loss,additional_loss = self.cal_loss_graph(user, pos, neg)
+        loss = llpauc_loss + additional_loss
         self.optimizer_descent.zero_grad()
 
         loss.backward()

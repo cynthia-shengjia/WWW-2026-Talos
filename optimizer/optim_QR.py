@@ -43,7 +43,7 @@ class ExpOptimizer(IROptimizer):
         self.quantile =nn.Parameter( (torch.zeros((self.model.num_users, 1))).cuda() )
 
         self.optimizer_descent = torch.optim.Adam([
-            {'params': self.model.parameters(), "lr": self.lr},
+            {'params': self.model.parameters(), "lr": self.lr, "weight_decay": self.weight_decay},
             {'params': self.quantile, "lr": self.lr2}
         ])
 
@@ -97,7 +97,6 @@ class ExpOptimizer(IROptimizer):
         users_emb = embedding_user[users.long()]
         pos_emb = embedding_item[pos.long()]
         neg_emb = embedding_item[neg.long()]
-        batch_size = users_emb.shape[0]
 
         pos_scores = torch.sum(users_emb * pos_emb, dim=1)
         neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
@@ -105,14 +104,13 @@ class ExpOptimizer(IROptimizer):
 
         loss = self.cal_loss(users, y_pred,quantile)
         quantile_loss = self.quantile_regression(users, user_all_pos, neg)
-        emb_loss = self.weight_decay * self.regularize(users_emb, pos_emb, neg_emb) / batch_size
         additional_loss =  self.model.additional_loss(
                         usr_idx = users.long(), 
                         pos_idx = pos.long(), 
                         embedding_user = embedding_user, 
                         embedding_item = embedding_item
                     )
-        return loss, emb_loss + additional_loss + quantile_loss
+        return loss, additional_loss + quantile_loss
 
     def regularize(self,users_emb, pos_emb, neg_emb):
         regularize = (torch.norm(users_emb[:, :]) ** 2
@@ -126,8 +124,8 @@ class ExpOptimizer(IROptimizer):
         topk_quantile = self.quantile[user.long()]
 
         # Second stage, compute the loss 
-        ssm_loss,emb_loss = self.cal_loss_graph(user, pos, user_all_pos, neg, topk_quantile)
-        loss = ssm_loss + emb_loss
+        ssm_loss,additional_loss = self.cal_loss_graph(user, pos, user_all_pos, neg, topk_quantile)
+        loss = ssm_loss + additional_loss
         self.optimizer_descent.zero_grad()
 
         loss.backward()

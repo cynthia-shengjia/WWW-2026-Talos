@@ -13,10 +13,6 @@ class IROptimizer(ABC):
         return NotImplemented
 
     @abstractmethod
-    def regularize(self, *args, **kwargs):
-        return NotImplemented
-
-    @abstractmethod
     def cal_loss_graph(self,*args,**kwargs):
         return NotImplemented
     

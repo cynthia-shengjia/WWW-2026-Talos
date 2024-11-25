@@ -28,7 +28,7 @@ class PreAtKOptimizer(IROptimizer):
 
 
         # === Model Optimizer ===
-        self.optimizer_descent = torch.optim.Adam(self.model.parameters(), lr = self.lr)
+        self.optimizer_descent = torch.optim.Adam(self.model.parameters(), lr = self.lr, weight_decay = self.weight_decay)
         self.quantile = (torch.zeros((self.model.num_users, 1))).cuda()
 
 
@@ -51,32 +51,26 @@ class PreAtKOptimizer(IROptimizer):
 
         return loss.mean()
 
-    def regularize(self,users_emb, pos_emb, neg_emb):
-        regularize = (torch.norm(users_emb[:, :]) ** 2
-                      + torch.norm(pos_emb[:, :]) ** 2
-                      + torch.norm(neg_emb[:, :]) ** 2) / 2  # take hop=0
-        return regularize
+
     def cal_loss_graph(self,users, pos, neg, quantile):
         embedding_user, embedding_item = self.model.compute()
 
         users_emb = embedding_user[users.long()]
         pos_emb = embedding_item[pos.long()]
         neg_emb = embedding_item[neg.long()]
-        batch_size = users_emb.shape[0]
 
         pos_scores = torch.sum(users_emb * pos_emb, dim=1)
         neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
         y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
 
         loss = self.cal_loss(users, y_pred,quantile)
-        emb_loss = self.weight_decay * self.regularize(users_emb, pos_emb, neg_emb) / batch_size
         additional_loss =  self.model.additional_loss(
                         usr_idx = users.long(), 
                         pos_idx = pos.long(), 
                         embedding_user = embedding_user, 
                         embedding_item = embedding_item
                     )
-        return loss, emb_loss + additional_loss
+        return loss, additional_loss
 
 
     def step(self, user, pos, neg):
@@ -85,8 +79,8 @@ class PreAtKOptimizer(IROptimizer):
         topk_quantile = self.quantile[user.long()]
 
         # Second stage, compute the loss 
-        ssm_loss,emb_loss = self.cal_loss_graph(user, pos, neg, topk_quantile)
-        loss = ssm_loss + emb_loss
+        ssm_loss,additional_loss = self.cal_loss_graph(user, pos, neg, topk_quantile)
+        loss = ssm_loss + additional_loss
         self.optimizer_descent.zero_grad()
 
         loss.backward()

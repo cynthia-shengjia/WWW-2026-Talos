@@ -36,7 +36,7 @@ class DrRLOptimizer(IROptimizer):
         # === Model Optimizer ===
         self.optimizer_descent = torch.optim.Adam([
             {'params': self.model.parameters(), 'lr': self.lr}
-        ])
+        ], weight_decay = self.weight_decay)
         self.optimizer_margin  = torch.optim.SGD([
             {'params': self.margin_vector, 'lr': self.lr2}
         ])
@@ -59,11 +59,6 @@ class DrRLOptimizer(IROptimizer):
 
         return loss
 
-    def regularize(self,users_emb, pos_emb, neg_emb):
-        regularize = (torch.norm(users_emb[:, :]) ** 2
-                      + torch.norm(pos_emb[:, :]) ** 2
-                      + torch.norm(neg_emb[:, :]) ** 2) / 2  # take hop=0
-        return regularize
 
     def cal_loss_graph(self, users, pos, neg):
         embedding_user, embedding_item = self.model.compute()
@@ -80,18 +75,17 @@ class DrRLOptimizer(IROptimizer):
         margin = self.margin_vector[users.long()]
 
         loss            =  self.cal_loss(y_pred = y_pred, margin_vec = margin)
-        emb_loss        =  self.weight_decay * self.regularize(users_emb, pos_emb, neg_emb) / batch_size
         additional_loss =  self.model.additional_loss(
                                 usr_idx = users.long(), 
                                 pos_idx = pos.long(), 
                                 embedding_user = embedding_user, 
                                 embedding_item = embedding_item
                             )
-        return loss, emb_loss + additional_loss
+        return loss, additional_loss
 
     def step(self, user, pos, neg):     
-        DrRL_loss,emb_loss = self.cal_loss_graph(user, pos, neg)
-        loss = DrRL_loss + emb_loss
+        DrRL_loss,additional_loss = self.cal_loss_graph(user, pos, neg)
+        loss = DrRL_loss + additional_loss
         self.optimizer_descent.zero_grad()
         loss.backward()
         self.optimizer_descent.step()
