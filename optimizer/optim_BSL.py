@@ -24,13 +24,9 @@ class BSLOptimizer(IROptimizer):
 
     def cal_loss(self, y_pred, users):
         # clip parameter
-        pos_logits = torch.exp(y_pred[:, 0] /  self.temp1 )
-        neg_logits = torch.exp(y_pred[:, 1:] / self.temp2 )
-
-        user = users.contiguous().view(-1, 1)
-        mask = torch.eq(user, user.T).float()
-        pos_logits = (pos_logits.unsqueeze(0) * mask).sum(1) / mask.sum(1)
-        neg_logits = torch.pow(torch.mean(neg_logits, dim=-1), self.neg_weight)
+        pos_logits = torch.exp(y_pred[:, 0] /  self.temp1 )                     # (B)
+        neg_logits = torch.exp(y_pred[:, 1:] / self.temp2 )                     # (B,N)
+        neg_logits = torch.pow(torch.sum(neg_logits, dim=-1), self.neg_weight)  # (B)
 
 
         loss = - torch.log(pos_logits / neg_logits).mean()
