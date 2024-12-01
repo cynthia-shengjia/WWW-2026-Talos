@@ -79,18 +79,21 @@ class Loader(Dataset):
         # self.pos_dic = self._sample_pos_temp()
         self.interaction_tensor = self.create_interaction_tensor().cuda()
 
-        # self.user_pos_items = self.create_user_positive_item().cuda()
+        self.user_pos_items = self.create_user_positive_item().cuda()
 
 
     def create_user_positive_item(self):
         max_padding = 0
+        
         for row in self.train_df.itertuples():
-            max_padding = max(max_padding, len(list(row.pos_items)))
+            max_padding = max(max_padding, len(row.pos_items))
 
-        return torch.tensor(
-            [list(row.pos_items) + [self.m_items for _ in range(0, max_padding - len(list(row.pos_items)))] for row in
-             self.train_df.itertuples()]
-        ).to(torch.int64)
+        user_pos_items  = torch.empty((self.n_user, max_padding), dtype = torch.int64)
+        
+        for row in self.train_df.itertuples():
+            user_pos_items[row.userId] = torch.tensor(list(row.pos_items) + [self.m_items] * (max_padding - len(row.pos_items))  )
+
+        return user_pos_items
 
 
         
