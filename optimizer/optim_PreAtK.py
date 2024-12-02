@@ -38,13 +38,9 @@ class PreAtKOptimizer(IROptimizer):
         trunc_neg = y_pred[:,1:] - quantile
 
         if self.mode == "multi":
-            user = users.contiguous().view(-1, 1)
-            mask = torch.eq(user, user.T).float()
-            pos_logits = (torch.exp( self.activation(trunc_pos)   / self.temp)).unsqueeze(0) * mask
-            pos_logits = torch.log(pos_logits.sum(dim = 1))
-        else:
-            pos_logits = torch.log( torch.exp( self.activation(trunc_pos)   / self.temp)        )
-        
+            trunc_neg = torch.cat((trunc_neg,trunc_pos.unsqueeze(dim = 1)),dim = 1)
+         
+        pos_logits = torch.log( torch.exp( self.activation(trunc_pos)   / self.temp)        )
         neg_logits = torch.logsumexp( self.activation(trunc_neg )  / self.temp, dim = 1     )
 
         loss = neg_logits - pos_logits
