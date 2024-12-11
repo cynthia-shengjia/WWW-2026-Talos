@@ -28,7 +28,8 @@ class ExpOptimizer(IROptimizer):
         # activation function choice
         act_dict = {
             "tanh":     lambda x: torch.log( torch.tanh(x) + 1 ),
-            "sigmoid":  lambda x: torch.log( torch.sigmoid(x)  )
+            "sigmoid":  lambda x: torch.log( torch.sigmoid(x)  ),
+            "relu":     lambda x: torch.log( torch.relu(x/2 + 1))
         }
 
         self.activation  = act_dict[config["activate_func"]]
