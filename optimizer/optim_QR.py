@@ -62,11 +62,12 @@ class ExpOptimizer(IROptimizer):
         pos_scores      = torch.bmm(users_emb.unsqueeze(1), pos_emb.transpose(1, 2)).squeeze(1)
         neg_scores      = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
         user_quantile   = self.quantile[users.long()]
+        check_sum       = (user_all_pos != self.model_items)
 
-        trunc_pos       = (1 - self.lambda_t) * torch.relu(pos_scores - user_quantile) + self.lambda_t * torch.relu(user_quantile - pos_scores)
+        trunc_pos       = (  (1 - self.lambda_t) * torch.relu(pos_scores - user_quantile) + self.lambda_t * torch.relu(user_quantile - pos_scores)   ) * check_sum
         trunc_neg       = (1 - self.lambda_t) * torch.relu(neg_scores - user_quantile) + self.lambda_t * torch.relu(user_quantile - neg_scores)
         
-        weight =  (self.model_items - (pos_scores != 0).sum(dim = 1).unsqueeze(dim = 1)) / self.sampled_neg
+        weight =  (self.model_items - check_sum.sum(dim = 1).unsqueeze(dim = 1)) / self.sampled_neg
 
         all_scores      = (torch.cat((trunc_pos, weight * trunc_neg), dim = 1)).sum(dim = 1) / self.model_items
 
