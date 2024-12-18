@@ -49,17 +49,9 @@ class ExpOptimizer(IROptimizer):
         ])
 
 
-    def quantile_regression(self, users, user_all_pos, neg):
-        embedding_user, embedding_item = self.model.compute()                                               # user and item embeddings
+    def quantile_regression(self, users, user_all_pos, users_emb, all_pos_emb,  neg_emb):
 
-        embedding_item_add = torch.cat( ( embedding_item, torch.zeros(1, self.model.latent_dim).cuda()) )   # padding
-
-        users_emb   = (embedding_user[users.long()]).detach()        # (B,dim)
-        pos_emb     = (embedding_item_add[user_all_pos]).detach()               # (B,PadSize,dim)
-        neg_emb     = (embedding_item[neg.long()]).detach()            # (B,PadSize,dim)
-
-
-        pos_scores      = torch.bmm(users_emb.unsqueeze(1), pos_emb.transpose(1, 2)).squeeze(1)
+        pos_scores      = torch.bmm(users_emb.unsqueeze(1), all_pos_emb.transpose(1, 2)).squeeze(1)
         neg_scores      = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
         user_quantile   = self.quantile[users.long()]
         check_sum       = (user_all_pos != self.model_items)
@@ -99,13 +91,17 @@ class ExpOptimizer(IROptimizer):
         users_emb = embedding_user[users.long()]
         pos_emb = embedding_item[pos.long()]
         neg_emb = embedding_item[neg.long()]
+        
+        # all_pos_embedding
+        embedding_item_add = torch.cat( ( embedding_item, torch.zeros(1, self.model.latent_dim).cuda()) )   # padding
+        all_pos_emb        = embedding_item_add[user_all_pos]
 
         pos_scores = torch.sum(users_emb * pos_emb, dim=1)
         neg_scores = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
         y_pred = torch.cat([pos_scores.unsqueeze(1), neg_scores], dim=1)
 
         loss = self.cal_loss(users, y_pred,quantile)
-        quantile_loss = self.quantile_regression(users, user_all_pos, neg)
+        quantile_loss = self.quantile_regression(users, user_all_pos, users_emb.detach(), all_pos_emb.detach(), neg_emb.detach())
         additional_loss =  self.model.additional_loss(
                         usr_idx = users.long(), 
                         pos_idx = pos.long(), 
