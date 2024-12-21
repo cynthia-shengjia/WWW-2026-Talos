@@ -7,6 +7,10 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="DRO_SSM")
     # Learning   adv_lr  eta_epochs  warm_up_epochs alpha beta  clip_grad_norm reg_weight noise_ratio  learning_mode
+    parser.add_argument("--SGDE_std",       type=float,     default = 0.1)
+    parser.add_argument("--SGDE_rec_vec",   type=int,       default = 20)
+    parser.add_argument("--SGDE_beta",      type=float,     default = 2)
+
     parser.add_argument("--activate_func", type=str, default = "exp")
     parser.add_argument("--valid_topks", nargs="?", default="[20]", help="@k test list")
 
@@ -101,6 +105,12 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 all_models = ["lgn", "mf"]
 config = {
+
+    "SGDE_std":     args.SGDE_std,
+    "SGDE_rec_vec": args.SGDE_rec_vec,
+    "SGDE_beta":    args.SGDE_beta,
+
+
     "activate_func": args.activate_func,
     "lambda_k": args.lambda_k,
     "shift_mode": args.shift_mode,

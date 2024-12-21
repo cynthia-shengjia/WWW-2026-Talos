@@ -72,6 +72,8 @@ class Loader(Dataset):
         if world.model_name != "mf":
             if world.model_name == "LightGCL":
                 self.get_SVD_matrix()
+            elif world.model_name == "SGDE":
+                self.SGDE_get_SVD_matrix()
             else:
                 self.getSparseGraph()
 
@@ -451,3 +453,38 @@ class Loader(Dataset):
         
         del s
         print("SVD done.")
+    
+    def SGDE_get_SVD_matrix(self):
+            
+            def scipy_sparse_mat_to_torch_sparse_tensor(sparse_mx):
+                sparse_mx = sparse_mx.tocoo().astype(np.float32)
+                indices = torch.from_numpy(np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
+                values = torch.from_numpy(sparse_mx.data)
+                shape = torch.Size(sparse_mx.shape)
+                return torch.sparse.FloatTensor(indices, values, shape)
+            
+            train = self.read_txt2coo()  # scipy.sparse.coo.coo_matrix
+            train_csr = (train != 0).astype(np.float32)  # 转换为CSR矩阵
+            
+            # normalizing the adj matrix
+            rowD = np.array(train.sum(1)).squeeze() + 2
+            colD = np.array(train.sum(0)).squeeze() + 2
+
+
+            for i in range(len(train.data)):
+                train.data[i] = train.data[i] / pow(rowD[train.row[i]] * colD[train.col[i]], 0.5)
+            
+            adj_norm = scipy_sparse_mat_to_torch_sparse_tensor(train)  # torch.sparse.FloatTensor
+            adj_norm = adj_norm.coalesce().cuda()  # 合并重复位置的值并排序
+            self.adj_norm = adj_norm
+            print("Adj matrix normalized.")
+            
+            train = train.tocoo()
+            
+            # perform svd reconstruction
+            adj = scipy_sparse_mat_to_torch_sparse_tensor(train).coalesce().cuda()
+            print("Performing SVD...")
+            self.svd_u, self.s, self.svd_v = torch.svd_lowrank(adj, q=400, niter=30)  # 对矩阵SVD分解
+
+
+            print("SVD done.")
