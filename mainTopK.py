@@ -40,8 +40,10 @@ dataset = dataloader.Loader(path=dataroot)
 MODELS = {
     "mf": model.model_MF.MFModel,
     "lgn": model.model_LightGCN.LightGCNModel,
-    "XSimGCL": model.model_XSimGCL.XSimGCLModel
+    "XSimGCL": model.model_XSimGCL.XSimGCLModel,
+    "SGDE":    model.model_SGDE.SGDEModel
 }
+
 LOSSES = {
     "topk_loss":    optimizer.optim_PreAtK.PreAtKOptimizer
 }
@@ -50,8 +52,23 @@ if world.config["loss"] == "bpr" or world.config["loss"] == "bce" or world.confi
     world.config["norm_emb"] = 0
     world.config["num_negative_items"] = 1
 
-Recmodel = MODELS[world.model_name](config=world.config, num_users=dataset.n_users, num_items=dataset.m_item,
-                                    Graph=dataset.Graph).cuda()
+if world.model_name == "SGDE":
+    Recmodel = MODELS[world.model_name](
+        config=world.config, 
+        num_users=dataset.n_users, 
+        num_items=dataset.m_item, 
+        SVD_User = dataset.svd_u, 
+        SVD_Value = dataset.s, 
+        SVD_Item = dataset.svd_v
+    ).cuda()
+else:
+    Recmodel = MODELS[world.model_name](
+        config=world.config, 
+        num_users=dataset.n_users, 
+        num_items=dataset.m_item,
+        Graph=dataset.Graph
+    ).cuda()
+
 loss_func = LOSSES[world.config["loss"]](model=Recmodel, config=world.config)
 
 
@@ -102,8 +119,23 @@ best_recall, best_ndcg, best_hit, best_precision = (
 patience = 0
 start_total = time.time()
 
-best_Recmodel = MODELS[world.model_name](config=world.config, num_users=dataset.n_users, num_items=dataset.m_item,
-                                         Graph=dataset.Graph).cuda()
+
+if world.model_name == "SGDE":
+    best_Recmodel = MODELS[world.model_name](
+        config=world.config, 
+        num_users=dataset.n_users, 
+        num_items=dataset.m_item, 
+        SVD_User = dataset.svd_u, 
+        SVD_Value = dataset.s, 
+        SVD_Item = dataset.svd_v
+    ).cuda()
+else:
+    best_Recmodel = MODELS[world.model_name](
+        config=world.config, 
+        num_users=dataset.n_users, 
+        num_items=dataset.m_item,
+        Graph=dataset.Graph
+    ).cuda()
 
 for epoch in range(world.TRAIN_epochs):
     start = time.time()
