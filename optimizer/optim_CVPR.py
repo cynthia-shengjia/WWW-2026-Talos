@@ -27,8 +27,7 @@ class CVPROptimizer(IROptimizer):
         # clip parameter
         d       = (y_pred[:, 1:] - y_pred[:, 0].unsqueeze(dim = 1)) 
         ranking = self.activation(d / self.temp).sum(dim = 1)
-        loss    = self.activation( (self.lambda_k - 1 - ranking) /self.temp2 )
-        
+        loss    =  1 - self.activation( (self.lambda_k - 1 - ranking) /self.temp2 )         
 
         return loss.mean()
 
