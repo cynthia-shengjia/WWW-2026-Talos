@@ -63,10 +63,10 @@ def TopKTrain(dataset: dataloader.Loader, recommend_model, loss_class, epoch, co
 
     iter_num = epoch * total_batch
 
-    if (epoch + 5) % 5 == 0:
-        with torch.no_grad():
-            for batch_id, batch_user in enumerate(utils.minibatch(torch.arange(Recmodel.num_users), batch_size = batch_size)):
-                loss.compute_topks(batch_user)
+    # if (epoch + 5) % 5 == 0:
+    with torch.no_grad():
+        for batch_id, batch_user in enumerate(utils.minibatch(torch.arange(Recmodel.num_users), batch_size = batch_size)):
+            loss.compute_topks(batch_user)
 
     for batch_id, (batch_users, batch_pos) in enumerate(utils.minibatch(users, posItems, batch_size=batch_size)):
         batch_users = batch_users.cuda(non_blocking=True)
