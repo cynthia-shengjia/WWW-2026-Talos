@@ -7,6 +7,8 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="DRO_SSM")
     # Learning   adv_lr  eta_epochs  warm_up_epochs alpha beta  clip_grad_norm reg_weight noise_ratio  learning_mode
+    parser.add_argument("--rank_temp", type = float, default = 1)
+
     parser.add_argument("--quantile", type=float, default = 0.1)
     
     parser.add_argument("--SGDE_std", type=float, default = 0.02)
@@ -107,7 +109,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 all_models = ["lgn", "mf"]
 config = {
-
+    "rank_temp": args.rank_temp,
     "quantile": args.quantile,
 
     "SGDE_std":     args.SGDE_std,
