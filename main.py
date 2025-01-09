@@ -53,7 +53,8 @@ LOSSES = {
     "DrRL": optimizer.optim_DrRL.DrRLOptimizer,
     "PSL":  optimizer.optim_PSL.PSLOptimizer,
     "TuneK": optimizer.optim_TuneK.PreAtKOptimizer,
-    "CVPR":  optimizer.optim_CVPR.CVPROptimizer
+    "CVPR":  optimizer.optim_CVPR.CVPROptimizer,
+    "PreTopK":  optimizer.optim_TopK.TopKOptimizer
 }
 
 if world.config["loss"] == "bpr" or world.config["loss"] == "bce" or world.config["loss"] == "rmse":
