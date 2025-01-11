@@ -131,7 +131,7 @@ for epoch in range(world.TRAIN_epochs):
             }
             nni.report_intermediate_result(metric)
 
-        if valid_precision[0] > best_precision[0] + 0.0001:
+        if valid_precision[0] > best_precision[0]:
             patience = 0
             if "NNI_PLATFORM" not in os.environ:
                 loss_func.save(os.path.join(save_dir, "best_model.pth"))
