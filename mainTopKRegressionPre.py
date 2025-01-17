@@ -44,7 +44,8 @@ MODELS = {
 }
 LOSSES = {
     "topk_loss_regression": optimizer.optim_QR.ExpOptimizer,
-    "AATK":                 optimizer.optim_AATK.AATKOptimizer
+    "AATK":                 optimizer.optim_AATK.AATKOptimizer,
+    "QR-Inner":             optimizer.optim_QRInner.ExpOptimizer
 }
 
 if world.config["loss"] == "bpr" or world.config["loss"] == "bce" or world.config["loss"] == "rmse":
