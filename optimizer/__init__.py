@@ -14,3 +14,6 @@ from optimizer.optim_AATK import *
 from optimizer.optim_CVPR import * 
 from optimizer.optim_TopK import *
 from optimizer.optim_QRInner import *
+from optimizer.optim_SmoothI import *
+from optimizer.optim_NeurNDCG import *
+from optimizer.optim_QRNotDe import *
