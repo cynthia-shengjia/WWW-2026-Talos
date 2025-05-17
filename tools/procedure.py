@@ -109,18 +109,20 @@ def test_one_batch(X):
     sorted_items = X[0].numpy()
     groundTrue = X[1]
     r = utils.getLabel(groundTrue, sorted_items)  # 一个包含batch个元素的list，每个元素是一个np数组
-    pre, recall, ndcg, hitratio = [], [], [], []
+    pre, recall, ndcg, hitratio,mrratk = [], [], [], [], []
     for k in world.topks:
         ret = utils.RecallPrecision_ATk(groundTrue, r, k)
         pre.append(ret["precision"])
         recall.append(ret["recall"])
         ndcg.append(utils.NDCGatK_r(groundTrue, r, k))
         hitratio.append(utils.HitRatio(r))
+        mrratk.append(utils.MRRatK_r(r,k))
     return {
         "recall": np.array(recall),
         "precision": np.array(pre),
         "ndcg": np.array(ndcg),
         "hitratio": np.array(hitratio),
+        "mrr":   np.array(mrratk)
     }
 
 
@@ -141,6 +143,7 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
         "recall": np.zeros(len(world.topks)),
         "ndcg": np.zeros(len(world.topks)),
         "hitratio": np.zeros(len(world.topks)),
+        "mrr":      np.zeros(len(world.topks))
     }
 
     with torch.no_grad():
@@ -182,16 +185,19 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
             results["precision"] += result["precision"]
             results["ndcg"] += result["ndcg"]
             results["hitratio"] += result["hitratio"]
+            results["mrr"]      += result["mrr"]
         results["recall"] /= float(len(users))
         results["precision"] /= float(len(users))
         results["ndcg"] /= float(len(users))
         results["hitratio"] /= float(dataset.testDataSize)
+        results["mrr"]      /= float(dataset.testDataSize)
 
         for i in range(len(world.topks)):
             w.add_scalar(f"Test/Recall_{world.topks[i]}", results["recall"][i], epoch)
             w.add_scalar(f"Test/Precision_{world.topks[i]}", results["precision"][i], epoch)
             w.add_scalar(f"Test/NDCG_{world.topks[i]}", results["ndcg"][i], epoch)
             w.add_scalar(f"Test/HitRatio_{world.topks[i]}", results["hitratio"][i], epoch)
+            w.add_scalar(f"Test/MRR_{world.topks[i]}", results["mrr"][i], epoch)
         if multicore == 1:
             pool.close()
 

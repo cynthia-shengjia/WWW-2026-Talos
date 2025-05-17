@@ -156,8 +156,8 @@ def MRRatK_r(r, k):
     Mean Reciprocal Rank
     """
     pred_data = r[:, :k]
-    scores = np.log2(1.0 / np.arange(1, k + 1))
-    pred_data = pred_data / scores
+    scores =  1.0 / np.arange(1, k + 1) 
+    pred_data = pred_data * scores
     pred_data = pred_data.sum(1)
     return np.sum(pred_data)
 
