@@ -1,0 +1,36 @@
+# IR-Benchmark
+
+This repository contains the code for the submission to the NeurIPS 2025.
+
+
+## Code Structure
+
+The code is organized as follows:
+
+```
+IR-Benchmark-SLatK
+│   README.md                           # This file
+|   main.py                             # The model training script for SL, BSL, LLPAUC, etc.
+|   mainAdvInfoNCE.py                   # The model training script for AdvInfoNCE.
+|   mainTopKRegression.py               # The model training script for TL@K, and so on.
+|   Config                              # The nni auto hyperparameter config
+|   |   TLatK.yaml                      # The hyperparameter tuning framework for TLatK
+│   normal_data                         # Datasets
+│   │   IID_Data_Used                   # IID dataset
+|   |   |   Beauty                      # Beauty IID dataset
+|   |   ... (other datasets)            # Other IID datasets
+│   optimizer                           # TLatK and other baseline methods
+|   |   optim_QR.py                     # TLatK Loss
+|   |   ... (other baseline methods)    # Other modules
+|   dataset                             # The dataloader
+|   model                               # The recommendation backbone
+|   tools                               # Training tools, e.g., calculating metrics
+```
+
+
+## NNI Hyperparameter Tuning
+
+We provide automatically conduct hyperparameter tuning with NNI framework. You can run:
+```
+nnictl create --config ./Config/TLatK.yaml --port [Your Possible Port]
+```
