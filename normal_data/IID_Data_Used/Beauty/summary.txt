@@ -1,0 +1,12 @@
+Final dataset statistics:
+Dataset: amazonBeauty
+Number of users: 15603
+Number of items: 8693
+Number of interactions: 139554
+Number of train interactions: 106082
+Number of test interactions: 33472
+Number of unique users in train: 15603
+Number of unique items in train: 8692
+Number of unique users in test: 15601
+Number of unique items in test: 7765
+N-core: 5
