@@ -7,6 +7,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="DRO_SSM")
     # Learning   adv_lr  eta_epochs  warm_up_epochs alpha beta  clip_grad_norm reg_weight noise_ratio  learning_mode
+    parser.add_argument("--SmoothI_delta", type = float, default = 0.5)
     parser.add_argument("--rank_temp", type = float, default = 1)
 
     parser.add_argument("--quantile", type=float, default = 0.1)
@@ -21,7 +22,7 @@ def parse_args():
     parser.add_argument("--num_quantile_negative_items", type = int)
 
     parser.add_argument("--diff_margin_and_topk", action="store_true")
-    parser.add_argument("--lambda_k", type=int, default=10, help='The topk chosen')
+    parser.add_argument("--lambda_k", type=int, default=20, help='The topk chosen')
 
     parser.add_argument("--shift_mode",type=str,default='others',help='shift mode')
     parser.add_argument("--learning_mode",type=str,default='personlized',help='noise ratio')
@@ -109,6 +110,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 all_models = ["lgn", "mf"]
 config = {
+    "SmoothI_delta": args.SmoothI_delta,
     "rank_temp": args.rank_temp,
     "quantile": args.quantile,
 
