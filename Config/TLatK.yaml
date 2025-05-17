@@ -1,0 +1,35 @@
+# nnictl create --config ./Config/TLatK.yaml --port 8060
+search_space:
+  ssm_temp:
+    _type: choice
+    _value: [ 0.05, 0.1, 0.15, 0.20, 0.25, 0.30]
+  lr:
+    _type: choice
+    _value: [0.1,0.01,0.001   ]
+  lr2:
+    _type: choice
+    _value: [ 0.001]
+  weight_decay:
+    _type: choice
+    _value: [0,0.00000001,0.000001]
+ 
+
+trial_command: python mainTopKRegressionPre.py  --cuda 7  --mode="single"  --activate_func="sigmoid" --loss='topk_loss_regression'   --datapath='IID_Data_Used'  --dataset='Beauty'  --valid_topks='[20]' --topks='[20]'  --lambda_k=20   --ssm_temp 0.1  --lr 1e-3 --lr2=1e-3   --weight_decay 1e-6  --model=mf --cl_rate=0.01 --cl_temp=0.2 --eps=0.1   --train_batch 1024 --num_negative_items 1024   --layer 3 --enable_dropout 0  --norm_emb 1   --seed=2024 
+trial_code_directory: ..
+
+
+trialGpuNumber: 1
+
+trial_concurrency: 1
+max_trial_number: 200
+
+tuner:
+  name: TPE
+  class_args:
+    optimize_mode: maximize
+
+training_service:
+  platform: local
+  maxTrialNumberPerGpu: 1
+  useActiveGpu: true
+  gpuIndices: [0]
