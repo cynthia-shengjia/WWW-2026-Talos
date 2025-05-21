@@ -3,6 +3,13 @@
 This repository contains the code for the submission to the NeurIPS 2025.
 
 
+# Conda Environment
+
+We provide the environment requirements, you can construct the environment as:
+```
+conda env create -f environment.yaml
+```
+
 ## Code Structure
 
 The code is organized as follows:
