@@ -64,7 +64,7 @@ class Loader(Dataset):
         self.items_D[self.items_D == 0.0] = 1.0
         # pre-calculate
         self._allPos = self.getUserPosItems(list(range(self.n_user)))
-        self.__testDict = self.__build_test()  # 字典testDict[uid] = [pos_iid1, pos_iid2, ...]
+        self.__testDict = self.__build_test()  #  testDict[uid] = [pos_iid1, pos_iid2, ...]
         self.__validDict = self.__build_valid()
 
         print(f"{world.config['dataset']} is ready to go")
@@ -106,43 +106,6 @@ class Loader(Dataset):
             interaction_tensor[user, list(pos_set)] = 1
         return interaction_tensor
 
-    def get_item_popularity_group(self, num=10):
-        item_counts = torch.bincount(self.trainItem_tensor)
-        items = torch.arange(len(item_counts))
-        sorted_indices = torch.argsort(item_counts, descending=True)
-
-        # 确定每组应该有多少个item
-        num_items = len(sorted_indices)
-        num_items_per_group = num_items // num
-
-        group_labels = torch.full((num_items,), -1, dtype=torch.long)
-
-        # 首先将items分配到10个基本组
-        for i in range(num_items_per_group * num):
-            group_index = i // num_items_per_group
-            group_labels[sorted_indices[i]] = group_index
-
-        # 创建一个额外的小组11
-        extra_group_index = num  # 因为基本组是从0到9，所以额外的小组索引是10
-
-        # 将剩余的items分配到额外的小组中
-        for i in range(num_items_per_group * num, num_items):
-            group_labels[sorted_indices[i]] = extra_group_index
-
-        # 输出分组标签
-        return group_labels
-    
-    def get_item_popularity_group_V2(self):
-        train_item_array, item_num = self.trainItem, self.m_item
-        unique, counts = np.unique(train_item_array, return_counts=True)
-        item_counts_tensor = torch.zeros(item_num, dtype=torch.int64)
-        item_counts_tensor[unique] = torch.from_numpy(counts)
-        item_frequencies = item_counts_tensor.cuda()
-        unique_freqs, inverse_indices = torch.unique(item_frequencies, return_inverse=True)
-        groupID = inverse_indices
-        print("unique_freqs.shape[0]", unique_freqs.shape[0])
-        
-        return groupID
     
     def __build_test(self):
         """
@@ -251,8 +214,7 @@ class Loader(Dataset):
 
     def _sample_pos_temp(self):
         """
-        本函数返回字典，key为userId，value为该user的正样本的idx组成的集合；
-        用来test Top负采样的样本中正样本的比例；
+        It returns user-postive dict.
         """
         pos_df = pd.DataFrame(
             {
@@ -273,7 +235,6 @@ class Loader(Dataset):
         return result.sum()
 
     def choose_items(self, exclude_set, num, method="method1"):
-        """从item pool中选取不在exclude_set中的num个item"""
         if method == "method1":
             sample_neg = cppimport.imp("sample1")
             choose_set = list(sample_neg.choose_items(self.m_item - 1, num, exclude_set))
@@ -350,12 +311,10 @@ class Loader(Dataset):
         return self._testSeries
 
     def edges(self):
-        """返回2 x datasize的tensor"""
         return torch.stack((torch.tensor(self.trainUser), torch.tensor(self.trainItem)), dim=0)
 
     def sample_edges(self, num):
-        """返回S为num x 2的tensor，每一行为一条边，第一列为user，第二列为item"""
-        index = np.random.randint(0, self.traindataSize, num)  # 随机采num条边
+        index = np.random.randint(0, self.traindataSize, num)
         S = np.zeros((num, 2))
         S[:, 0] = self.trainUser[index]
         S[:, 1] = self.trainItem[index]
@@ -366,14 +325,14 @@ class Loader(Dataset):
         edges = self.edges()
         U = edges[0]
         I = edges[1]
-        uI = I + self.n_users  # 偏移n_users个indices
+        uI = I + self.n_users 
 
         ind = torch.stack((torch.cat((U, uI)), torch.cat((uI, U))), dim=0)
 
         tempg = torch.sparse_coo_tensor(
             ind, torch.ones(ind.shape[1]), (self.n_users + self.m_items, self.n_users + self.m_items)
-        ).coalesce()  # 创建邻接矩阵的稀疏tensor；coalesce()用于对相同索引的多个值求和
-        deg = torch.sparse.sum(tempg, dim=1).to_dense()  # 度向量
+        ).coalesce() 
+        deg = torch.sparse.sum(tempg, dim=1).to_dense() 
         deg = torch.where(deg == 0, torch.tensor(1.0), deg)
         muldeg = torch.pow(deg, -0.5)
 
@@ -386,7 +345,7 @@ class Loader(Dataset):
         G.values = G.values() / tempg.values()
         G = G.cuda()
 
-        # Graph为一个稀疏矩阵、graphdeg为一个向量
+        # Graph is a sparse matrix, graphdeg is a vector
         self.Graph, self.graphdeg = G, deg
         self.graphdeg_cpu = self.graphdeg.clone().cpu()
         return True
@@ -395,14 +354,14 @@ class Loader(Dataset):
         return np.array(self.UserItemNet[users, items]).astype("uint8").reshape((-1,))
        
     def getUserPosItems(self, users):
-        """给定user的list，返回多个list，每个list为一个user的正样本的idx"""
+        """
+        Given user list, reruing user potive id list.
+        """
         posItems = []
         for user in users:
             posItems.append(self.UserItemNet[user].nonzero()[1])
         return posItems
     
-    
-    # 下面是给LightGCL使用的函数
     def read_txt2coo(self):
         path = os.path.join(self.path, "train_data.txt")
         data = pd.read_csv(path, delimiter=" ", header=None)
@@ -422,8 +381,8 @@ class Loader(Dataset):
             shape = torch.Size(sparse_mx.shape)
             return torch.sparse.FloatTensor(indices, values, shape)
         
-        train = self.read_txt2coo()  # scipy.sparse.coo.coo_matrix
-        train_csr = (train != 0).astype(np.float32)  # 转换为CSR矩阵
+        train = self.read_txt2coo() 
+        train_csr = (train != 0).astype(np.float32) 
         
         # normalizing the adj matrix
         rowD = np.array(train.sum(1)).squeeze()
@@ -432,7 +391,7 @@ class Loader(Dataset):
             train.data[i] = train.data[i] / pow(rowD[train.row[i]] * colD[train.col[i]], 0.5)
         
         adj_norm = scipy_sparse_mat_to_torch_sparse_tensor(train)  # torch.sparse.FloatTensor
-        adj_norm = adj_norm.coalesce().cuda()  # 合并重复位置的值并排序
+        adj_norm = adj_norm.coalesce().cuda() 
         self.adj_norm = adj_norm
         print("Adj matrix normalized.")
         
@@ -441,7 +400,7 @@ class Loader(Dataset):
         # perform svd reconstruction
         adj = scipy_sparse_mat_to_torch_sparse_tensor(train).coalesce().cuda()
         print("Performing SVD...")
-        svd_u, s, svd_v = torch.svd_lowrank(adj, q=self.config['q'])  # 对矩阵SVD分解
+        svd_u, s, svd_v = torch.svd_lowrank(adj, q=self.config['q']) 
 
         self.u_mul_s = svd_u @ (torch.diag(s))  # user_num x 5
         self.v_mul_s = svd_v @ (torch.diag(s))  # item_num x 5
@@ -464,7 +423,7 @@ class Loader(Dataset):
                 return torch.sparse.FloatTensor(indices, values, shape)
             
             train = self.read_txt2coo()  # scipy.sparse.coo.coo_matrix
-            train_csr = (train != 0).astype(np.float32)  # 转换为CSR矩阵
+            train_csr = (train != 0).astype(np.float32)  
             
             # normalizing the adj matrix
             rowD = np.array(train.sum(1)).squeeze() + 2
