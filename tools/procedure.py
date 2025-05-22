@@ -10,7 +10,7 @@ from dataset import dataloader
 from tools.world import cprint
 
 
-CORES = multiprocessing.cpu_count() // 2  # 4090服务器上有256个核心
+CORES = multiprocessing.cpu_count() // 2 
 
 
 
@@ -90,7 +90,7 @@ def TopKTrain(dataset: dataloader.Loader, recommend_model, loss_class, epoch, co
 def valid_one_batch(X):
     sorted_items = X[0].numpy()
     groundTrue = X[1]
-    r = utils.getLabel(groundTrue, sorted_items)  # 一个包含batch个元素的list，每个元素是一个np数组
+    r = utils.getLabel(groundTrue, sorted_items) 
     pre, recall, ndcg, hitratio = [], [], [], []
     for k in world.valid_topks:
         ret = utils.RecallPrecision_ATk(groundTrue, r, k)
@@ -108,7 +108,7 @@ def valid_one_batch(X):
 def test_one_batch(X):
     sorted_items = X[0].numpy()
     groundTrue = X[1]
-    r = utils.getLabel(groundTrue, sorted_items)  # 一个包含batch个元素的list，每个元素是一个np数组
+    r = utils.getLabel(groundTrue, sorted_items) 
     pre, recall, ndcg, hitratio,mrratk = [], [], [], [], []
     for k in world.topks:
         ret = utils.RecallPrecision_ATk(groundTrue, r, k)
@@ -127,7 +127,7 @@ def test_one_batch(X):
 
 
 def Test(dataset, Recmodel, epoch, w=None, multicore=0):
-    u_batch_size = world.config["test_u_batch_size"]  # 默认是100，多少个user一起test
+    u_batch_size = world.config["test_u_batch_size"]  
 
     dataset: utils.BasicDataset
     testDict: dict = dataset.testDict
@@ -154,12 +154,12 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
         total_batch = len(users) // u_batch_size + 1
 
         for batch_users in utils.minibatch(users, batch_size=u_batch_size):
-            # batch_users是一个tuple，里面是user的id
+             
             allPos = dataset.getUserPosItems(batch_users)  # train positive items
             groundTrue = [testDict[u] for u in batch_users]  # test positive items
             batch_users_gpu = torch.Tensor(batch_users).long().cuda()
 
-            rating = Recmodel.getUsersRating(batch_users_gpu)  # 给出users和所有item的评分，返回二维tensor
+            rating = Recmodel.getUsersRating(batch_users_gpu)  
             exclude_index = []
             exclude_items = []
             for range_i, items in enumerate(allPos):
@@ -169,8 +169,8 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
             _, rating_K = torch.topk(rating, k=max_K)
 
             users_list.append(batch_users)
-            rating_list.append(rating_K.cpu())  # 每个元素是一个二维tensor，表示每个user的topk item
-            groundTrue_list.append(groundTrue)  # 每个元素是一个两层list，表示每个user的test positive items
+            rating_list.append(rating_K.cpu())   
+            groundTrue_list.append(groundTrue)   
 
         X = zip(rating_list, groundTrue_list)
         if multicore == 1:
@@ -207,7 +207,7 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
 
 def Valid(dataset, Recmodel, epoch, w=None, multicore=0):
     cprint("[Valid]")
-    u_batch_size = world.config["test_u_batch_size"]  # 默认是100，多少个user一起test
+    u_batch_size = world.config["test_u_batch_size"]  
 
     dataset: utils.BasicDataset
     # testDict: dict = dataset.testDict
@@ -236,25 +236,25 @@ def Valid(dataset, Recmodel, epoch, w=None, multicore=0):
         total_batch = len(users) // u_batch_size + 1
 
         for batch_users in utils.minibatch(users, batch_size=u_batch_size):
-            # batch_users是一个tuple，里面是user的id
+             
             allPos = dataset.getUserPosItems(batch_users)  # train positive items
             # groundTrue = [testDict[u] for u in batch_users]  # test positive items
             groundTrue = [validDict[u] for u in batch_users]  # valid positive items
             batch_users_gpu = torch.Tensor(batch_users).long().cuda()
 
-            rating = Recmodel.getUsersRating(batch_users_gpu)  # 给出users和所有item的评分，返回二维tensor
+            rating = Recmodel.getUsersRating(batch_users_gpu)   
             exclude_index = []
             exclude_items = []
             for range_i, items in enumerate(allPos):
                 exclude_index.extend([range_i] * len(items))
                 exclude_items.extend(items)
-            # 排除所有的训练样本，不参与计算metric
+             
             rating[exclude_index, exclude_items] = -(1 << 10)
             _, rating_K = torch.topk(rating, k=max_K)      
 
             users_list.append(batch_users)
-            rating_list.append(rating_K.cpu())  # 每个元素是一个二维tensor，表示每个user的topk item
-            groundTrue_list.append(groundTrue)  # 每个元素是一个两层list，表示每个user的valid positive items
+            rating_list.append(rating_K.cpu())   
+            groundTrue_list.append(groundTrue)   
 
         X = zip(rating_list, groundTrue_list)
         if multicore == 1:
