@@ -12,7 +12,7 @@ conda env create -f environment.yaml
 
 This will create a conda environment named `rec_gym`. To activate the environment, run:
 ```
-conda activate itemrec
+conda activate rec_gym
 ```
 
 ## Code Structure
