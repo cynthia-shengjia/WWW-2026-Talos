@@ -11,3 +11,5 @@
 /optimizer/__pycache__/
 /tools/__pycache__/
 /backed/
+/running/
+/singleTest.py

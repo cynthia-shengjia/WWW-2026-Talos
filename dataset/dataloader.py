@@ -1,3 +1,7 @@
+# -------------------------------------------------------------------
+# Copyright (c) 2025 Year Anonymous Authors of NeurIPS 2025 Submission 10239
+# -------------------------------------------------------------------
+
 """
 Design Dataset here
 Every dataset's index has to start at 0

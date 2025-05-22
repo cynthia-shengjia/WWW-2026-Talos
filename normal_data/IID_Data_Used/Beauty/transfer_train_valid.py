@@ -1,3 +1,6 @@
+# -------------------------------------------------------------------
+# Copyright (c) 2025 Year Anonymous Authors of NeurIPS 2025 Submission 10239
+# -------------------------------------------------------------------
 import random
 import math
 random.seed(2024)
