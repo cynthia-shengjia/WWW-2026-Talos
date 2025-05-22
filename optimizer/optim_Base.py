@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------
-# Copyright (c) 2025 Year Anonymous Authors of NeurIPS 2025 Submission 10239
+# Copyright (c) 2025 Anonymous Authors of NeurIPS 2025 Submission 10239
 # -------------------------------------------------------------------
 from abc import ABC, abstractmethod
 
