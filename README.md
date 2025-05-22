@@ -10,6 +10,11 @@ We provide the environment requirements, you can construct the environment as:
 conda env create -f environment.yaml
 ```
 
+This will create a conda environment named `rec_gym`. To activate the environment, run:
+```
+conda activate itemrec
+```
+
 ## Code Structure
 
 The code is organized as follows:
