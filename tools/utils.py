@@ -1,3 +1,7 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+
 import numpy as np
 import torch
 from sklearn.metrics import roc_auc_score
