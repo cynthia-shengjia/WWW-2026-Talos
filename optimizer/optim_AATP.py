@@ -1,3 +1,15 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - AATP Loss
+# Description:
+#  This module provides the AATP Optimizer for ItemRec.
+#  AATP is surrogate loss for Precision@K.
+#  Reference:
+#  Boyd, S., Cortes, C., Mohri, M., & Radovanovic, A. (2012). 
+#  Accuracy at the top. Advances in neural information processing systems, 25.
+# -------------------------------------------------------------------
+
 from torch import nn
 from optimizer.optim_Base import IROptimizer
 import torch

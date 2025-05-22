@@ -1,3 +1,17 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - LLPAUC (Lower-Left Partial AUC)
+# Description:
+#  This module provides the LLPAUC Optimizer for ItemRec. LLPAUC is a partial AUC
+#  loss function for item recommendation, which focuses on the lower-left part of
+#  the ROC curve so as to optimize Top-K metrics.
+#  Reference:
+#  - Shi, W., Wang, C., Feng, F., Zhang, Y., Wang, W., Wu, J., & He, X. (2024). 
+#   Lower-Left Partial AUC: An Effective and Efficient Optimization Metric for Recommendation. 
+#   arXiv preprint arXiv:2403.00844.
+# -------------------------------------------------------------------
+
 from optimizer.optim_Base import IROptimizer
 from torch import nn
 import torch

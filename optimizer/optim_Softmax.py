@@ -1,3 +1,15 @@
+# -------------------------------------------------------------------
+# Module: Model - Softmax Optimizer
+# Description:
+#  This module provides the Softmax (Sampled Softmax Loss) Optimizer for
+#  ItemRec. Softmax is a widely used (and de facto standard) loss function
+#  for item recommendation. The Softmax optimizer is inherited from IROptimizer.
+#  Reference:
+#  - Wu, J., Wang, X., Gao, X., Chen, J., Fu, H., Qiu, T., & He, X. (2022). 
+#   On the effectiveness of sampled softmax loss for item recommendation. 
+#   ACM Transactions on Information Systems.
+# -------------------------------------------------------------------
+
 from optimizer.optim_Base import IROptimizer
 from torch import nn
 import torch

@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------
+# Module: Model - TLatK Optimizer
+# Description:
+#  This module provides the NeurIPS 2025 submisstion TL@K (Top-K Loss) Optimizer for ItemRec.
+# -------------------------------------------------------------------
+
 from torch import nn
 from optimizer.optim_Base import IROptimizer
 import torch
@@ -27,9 +33,7 @@ class ExpOptimizer(IROptimizer):
 
         # activation function choice
         act_dict = {
-            "tanh":     lambda x: torch.log( torch.tanh(x) + 1 ),
             "sigmoid":  lambda x: torch.log( torch.sigmoid(x)  ),
-            "relu":     lambda x: torch.log( torch.relu(x/2 + 1))
         }
 
         self.activation  = act_dict[config["activate_func"]]

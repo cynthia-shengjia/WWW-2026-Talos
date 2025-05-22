@@ -1,3 +1,18 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - RS@K Loss
+# Description:
+#  This module provides the RS@K Optimizer for ItemRec.
+#  RS@K is surrogate loss for Recall@K.
+#  Reference:
+#  Patel, Y., Tolias, G., & Matas, J. (2022). Recall@ k surrogate loss with large batches and similarity mixup. 
+#  In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (pp. 7502-7511).
+# -------------------------------------------------------------------
+
+
+
+
 from optimizer.optim_Base import IROptimizer
 from torch import nn
 import torch

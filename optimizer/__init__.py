@@ -1,3 +1,6 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
 from optimizer.optim_Base import *
 from optimizer.optim_LLPAUC import *
 from optimizer.optim_Softmax import *

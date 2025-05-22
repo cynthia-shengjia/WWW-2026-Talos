@@ -1,3 +1,18 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - AdvInfoNCE Loss
+# Description:
+#  This module provides the AdvInfoNCE Optimizer for ItemRec. AdvInfoNCE 
+#  is a novel loss function for item recommendation mainly based on InfoNCE
+#  (Contrastive Learning) and adversarial learning. AdvInfoNCE assigns 
+#  different hardness to each negative item by adversarial learning.
+#  Reference:
+#  - Zhang, A., Sheng, L., Cai, Z., Wang, X., & Chua, T. S. (2024). 
+#   Empowering Collaborative Filtering with Principled Adversarial Contrastive Loss. 
+#   Advances in Neural Information Processing Systems, 36.
+# -------------------------------------------------------------------
+
 from optimizer.optim_Base import IROptimizer
 from torch import nn
 import torch

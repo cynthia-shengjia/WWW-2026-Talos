@@ -1,7 +1,22 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - NeuralNDCG@K Loss
+# Description:
+#  This module provides the NeuralNDCG@K Optimizer for ItemRec.
+#  NeuralNDCG@K is surrogate loss for NDCG@K.
+#  Reference:
+#  Pobrotyn, P., & Białobrzeski, R. (2021). 
+#  Neuralndcg: Direct optimisation of a ranking metric via differentiable relaxation of sorting. 
+#  arXiv preprint arXiv:2102.07831.
+# -------------------------------------------------------------------
+
+
 from optimizer.optim_Base import IROptimizer
 from torch import nn
 import torch
 import numpy as np
+
 PADDED_Y_VALUE = -1
 DEFAULT_EPS=1e-10
 # https://github.com/allegro/allRank/blob/master/allrank/models/losses/neuralNDCG.py

@@ -1,3 +1,7 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+
 from torch import nn
 from abc import ABC, abstractmethod
 from dataset.dataloader import Loader

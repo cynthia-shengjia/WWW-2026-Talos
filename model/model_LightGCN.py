@@ -1,3 +1,16 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - LightGCN
+# Description:
+#  This module provides the LightGCN model for item recommendation.
+#  Reference:
+#  - Xiangnan He, Kuan Deng, Xiang Wang, Yan Li, YongDong Zhang, and Meng Wang. 2020. 
+#   LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation. 
+#   In Proceedings of the 43rd International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR '20). 
+#   Association for Computing Machinery, New York, NY, USA, 639-648. https://doi.org/10.1145/3397271.3401063
+# -------------------------------------------------------------------
+
 from model.model_Base import IRModel
 from torch import nn
 import torch.nn.functional as F

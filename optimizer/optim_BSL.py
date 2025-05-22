@@ -1,3 +1,17 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - Bilateral Softmax Loss
+# Description:
+#  This module provides the BSL (Bilateral Softmax Loss) Optimizer for 
+#  ItemRec. BSL is a novel loss function for item recommendation, which
+#  considers the bilateral robustness of both positive and negative items.
+#  Reference:
+#  - Wu, J., Chen, J., Wu, J., Shi, W., Zhang, J., & Wang, X. (2023). 
+#   BSL: Understanding and Improving Softmax Loss for Recommendation. 
+#   arXiv preprint arXiv:2312.12882.
+# -------------------------------------------------------------------
+
 from optimizer.optim_Base import IROptimizer
 from torch import nn
 import torch

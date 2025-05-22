@@ -1,3 +1,17 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - Pairwise Softmax Loss
+# Description:
+#  This module provides the PSL (Pairwise Softmax Loss) Optimizer for ItemRec.
+#  PSL is a NDCG surrogate loss function with DRO-robusetness optimization.
+#  The PSL optimizer is inherited from IROptimizer.
+#  Reference:
+#  - Yang, W., Chen, J., Xin, X., Zhou, S., Hu, B., Feng, Y., ... & Wang, C. 
+#   PSL: Rethinking and Improving Softmax Loss from Pairwise Perspective for Recommendation. 
+#   In The Thirty-eighth Annual Conference on Neural Information Processing Systems.
+# -------------------------------------------------------------------
+
 from optimizer.optim_Base import IROptimizer
 from torch import nn
 import torch

@@ -1,3 +1,14 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - Matrix Factorization (MF)
+# Description:
+#  This module provides the Matrix Factorization (MF) model for ItemRec.
+#  Reference:
+#  - Y. Koren, R. Bell and C. Volinsky, "Matrix Factorization Techniques for Recommender Systems," 
+#   in Computer, vol. 42, no. 8, pp. 30-37, Aug. 2009, doi: 10.1109/MC.2009.263.
+# -------------------------------------------------------------------
+
 from model.model_Base import IRModel
 from torch import nn
 

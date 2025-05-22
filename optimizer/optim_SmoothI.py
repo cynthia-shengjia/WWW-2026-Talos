@@ -1,9 +1,20 @@
+# -------------------------------------------------------------------
+# Module: Model - SmoothI@K Loss
+# Description:
+#  This module provides the SmoothI@K Optimizer for ItemRec.
+#  SmoothI is surrogate for Top-K indicator. The SmoothI@K loss that we implementd is from:
+#  https://github.com/ygcinar/SmoothI/blob/main/src/losses.py
+#  It employs the precision@K surrogate form.
+#  Reference:
+#  Thonet T, Cinar Y G, Gaussier E, et al. Listwise learning to rank based on approximate rank indicators
+#  Proceedings of the AAAI Conference on Artificial Intelligence. 2022, 36(8): 8494-8502.
+# -------------------------------------------------------------------
+
+
 from optimizer.optim_Base import IROptimizer
 from torch import nn
 import torch
 
-
-# https://github.com/ygcinar/SmoothI/blob/main/src/losses.py
 
 class ListwiseSmoothIOptimizer(IROptimizer):
     def __init__(self, model, config):

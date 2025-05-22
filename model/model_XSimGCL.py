@@ -1,3 +1,15 @@
+# -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - XSimGCL
+# Description:
+#  This module provides the XSimGCL model for item recommendation.
+#  Reference:
+# - Yu, J., Xia, X., Chen, T., Cui, L., Hung, N. Q. V., & Yin, H. (2023). 
+#  XSimGCL: Towards extremely simple graph contrastive learning for recommendation. 
+#  IEEE Transactions on Knowledge and Data Engineering.
+# -------------------------------------------------------------------
+
 from model.model_Base import IRModel
 from torch import nn
 import torch.nn.functional as F

@@ -1,3 +1,18 @@
+# -------------------------------------------------------------------
+# ItemRec / Item Recommendation Benchmark
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
+# Module: Model - BPR Optimizer
+# Description:
+#  This module provides the BPR (Bayesian Personalized Ranking) Optimizer
+#  for ItemRec. BPR is a pairwise loss function, which is widely used in
+#  recommendation systems. The BPR optimizer is inherited from IROptimizer.
+#  Reference:
+#  - Rendle, S., Freudenthaler, C., Gantner, Z., & Schmidt-Thieme, L. (2012). 
+#   BPR: Bayesian personalized ranking from implicit feedback. 
+#   arXiv preprint arXiv:1205.2618.
+# -------------------------------------------------------------------
+
 from optimizer.optim_Base import IROptimizer
 from torch import nn
 import torch
