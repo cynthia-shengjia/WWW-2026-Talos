@@ -1,4 +1,6 @@
 # -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
 # Module: Model - TLatK Optimizer
 # Description:
 #  This module provides the NeurIPS 2025 submisstion TL@K (Top-K Loss) Optimizer for ItemRec.

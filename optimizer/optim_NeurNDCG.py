@@ -10,6 +10,9 @@
 #  Neuralndcg: Direct optimisation of a ranking metric via differentiable relaxation of sorting. 
 #  arXiv preprint arXiv:2102.07831.
 # -------------------------------------------------------------------
+# The code is from https://github.com/allegro/allRank/blob/master/allrank/models/losses/neuralNDCG.py
+# The code is from https://github.com/allegro/allRank/blob/master/allrank/models/losses/loss_utils.py
+# -------------------------------------------------------------------
 
 
 from optimizer.optim_Base import IROptimizer
@@ -19,8 +22,7 @@ import numpy as np
 
 PADDED_Y_VALUE = -1
 DEFAULT_EPS=1e-10
-# https://github.com/allegro/allRank/blob/master/allrank/models/losses/neuralNDCG.py
-# https://github.com/allegro/allRank/blob/master/allrank/models/losses/loss_utils.py
+
 
 def ndcg(y_pred, y_true, ats=None, gain_function=lambda x: torch.pow(2, x) - 1, padding_indicator=PADDED_Y_VALUE,
          filler_value=1.0):

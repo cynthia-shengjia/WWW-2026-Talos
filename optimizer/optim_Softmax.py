@@ -1,4 +1,6 @@
 # -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
 # Module: Model - Softmax Optimizer
 # Description:
 #  This module provides the Softmax (Sampled Softmax Loss) Optimizer for

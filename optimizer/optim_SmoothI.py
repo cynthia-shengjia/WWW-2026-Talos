@@ -1,4 +1,6 @@
 # -------------------------------------------------------------------
+# Copyright (C) 2025 Anonymous Authors of NeurIPS 2025
+# -------------------------------------------------------------------
 # Module: Model - SmoothI@K Loss
 # Description:
 #  This module provides the SmoothI@K Optimizer for ItemRec.
