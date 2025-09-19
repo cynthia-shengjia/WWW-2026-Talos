@@ -9,7 +9,8 @@ from optimizer.optim_BSL import *
 from optimizer.optim_BPR import *
 from optimizer.optim_QR import *
 from optimizer.optim_PSL import *
-from optimizer.optim_AATK import *
+from optimizer.optim_AATP import *
 from optimizer.optim_CVPR import * 
 from optimizer.optim_SmoothI import *
 from optimizer.optim_NeurNDCG import *
+from optimizer.optim_SLatK import *

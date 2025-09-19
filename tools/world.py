@@ -11,6 +11,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="DRO_SSM")
     # Learning   adv_lr  eta_epochs  warm_up_epochs alpha beta  clip_grad_norm reg_weight noise_ratio  learning_mode
+    parser.add_argument("--ssm_temp_beta", type = float, default = 1.25)
     parser.add_argument("--SmoothI_delta", type = float, default = 0.5)
     parser.add_argument("--rank_temp", type = float, default = 1)
 
@@ -114,6 +115,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
 all_models = ["lgn", "mf"]
 config = {
+    "ssm_temp_beta": args.ssm_temp_beta,
     "SmoothI_delta": args.SmoothI_delta,
     "rank_temp": args.rank_temp,
     "quantile": args.quantile,

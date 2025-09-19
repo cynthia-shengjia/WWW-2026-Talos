@@ -44,24 +44,18 @@ dataset = dataloader.Loader(path=dataroot)
 MODELS = {
     "mf": model.model_MF.MFModel,
     "lgn": model.model_LightGCN.LightGCNModel,
-    "XSimGCL": model.model_XSimGCL.XSimGCLModel,
-    "SGDE":    model.model_SGDE.SGDEModel
+    "XSimGCL": model.model_XSimGCL.XSimGCLModel
 }
 LOSSES = {
     "llpauc": optimizer.optim_LLPAUC.LLPAUCOptimizer,
     'softmax': optimizer.optim_Softmax.SoftmaxOptimizer,
-    "topk_loss": optimizer.optim_PreAtK.PreAtKOptimizer,
     "advInfoNCE": optimizer.optim_AdvInfoNCE.AdvInfoNCEOptimizer,
     "BSL": optimizer.optim_BSL.BSLOptimizer,
     "bpr": optimizer.optim_BPR.BPROptimizer,
-    "DrRL": optimizer.optim_DrRL.DrRLOptimizer,
     "PSL":  optimizer.optim_PSL.PSLOptimizer,
-    "TuneK": optimizer.optim_TuneK.PreAtKOptimizer,
     "CVPR":  optimizer.optim_CVPR.CVPROptimizer,
-    "PreTopK":  optimizer.optim_TopK.TopKOptimizer,
     "SmoothI":  optimizer.optim_SmoothI.ListwiseSmoothIOptimizer,
     "NeurNDCG": optimizer.optim_NeurNDCG.NeurNDCGOptimizer
-
 }
 
 if world.config["loss"] == "bpr" or world.config["loss"] == "bce" or world.config["loss"] == "rmse":
