@@ -54,7 +54,7 @@ class ExpOptimizer(IROptimizer):
         softmax_loss = torch.logsumexp(d / self.temp, dim = 1)
         weight       = self.activation(trunc_pos)
         loss         = weight * softmax_loss
-        return softmax_loss.mean()
+        return loss.mean()
 
 
     def cal_loss_graph(self,users, pos, user_all_pos, neg):
