@@ -42,8 +42,11 @@ class ExpOptimizer(IROptimizer):
         neg_scores      = torch.bmm(users_emb.unsqueeze(1), neg_emb.transpose(1, 2)).squeeze(1)
         all_scores      = torch.cat( (pos_scores, neg_scores), dim = 1)
 
+        max_item_num    = all_scores.shape[1]
+        selected_k      = min(max_item_num,self.lambda_k)
+ 
         with torch.no_grad():
-            quantile = torch.topk(all_scores, self.lambda_k, dim=1)[0][:, -1]
+            quantile = torch.topk(all_scores, selected_k, dim=1)[0][:, -1]
             self.quantile[users] = quantile.unsqueeze(dim=1)
 
         return quantile
