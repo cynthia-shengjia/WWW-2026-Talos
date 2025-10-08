@@ -63,22 +63,13 @@ if world.config["loss"] == "bpr" or world.config["loss"] == "bce" or world.confi
     world.config["num_negative_items"] = 1
 
 
-if world.model_name == "SGDE":
-    Recmodel = MODELS[world.model_name](
-        config=world.config, 
-        num_users=dataset.n_users, 
-        num_items=dataset.m_item, 
-        SVD_User = dataset.svd_u, 
-        SVD_Value = dataset.s, 
-        SVD_Item = dataset.svd_v
-    ).cuda()
-else:
-    Recmodel = MODELS[world.model_name](
-        config=world.config, 
-        num_users=dataset.n_users, 
-        num_items=dataset.m_item,
-        Graph=dataset.Graph
-    ).cuda()
+
+Recmodel = MODELS[world.model_name](
+    config=world.config, 
+    num_users=dataset.n_users, 
+    num_items=dataset.m_item,
+    Graph=dataset.Graph
+).cuda()
 
 loss_func = LOSSES[world.config["loss"]](model=Recmodel, config=world.config)
 
