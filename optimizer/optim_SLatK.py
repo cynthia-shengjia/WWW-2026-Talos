@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------
 # Copyright (c) 2025 Anonymous Authors of WWW 2026 Submission 3321
 # -------------------------------------------------------------------
-# Module: Model - TLatK Optimizer
+# Module: Model - SLatK Optimizer
 # Description:
 #  This module provides the SL@K Optimizer for ItemRec.
 #  SL is surrogate for NDCG@K.

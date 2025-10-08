@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------
 # Copyright (c) 2025 Anonymous Authors of WWW 2026 Submission 3321
 # -------------------------------------------------------------------
-# Module: Model - TLatK Optimizer
+# Module: Model - Talos Optimizer
 # Description:
 #  This module provides the WWW  2025 submisstion Tolas Optimizer for ItemRec.
 # -------------------------------------------------------------------

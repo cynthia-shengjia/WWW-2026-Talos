@@ -26,13 +26,13 @@ IR-Benchmark-SLatK
 |   mainAdvInfoNCE.py                   # The model training script for AdvInfoNCE.
 |   mainTopKRegression.py               # The model training script for Talos, and so on.
 |   Config                              # The nni auto hyperparameter config
-|   |   TLatK.yaml                      # The hyperparameter tuning framework for TLatK
+|   |   Talos.yaml                      # The hyperparameter tuning framework for Talos
 │   normal_data                         # Datasets
 │   │   IID_Data_Used                   # IID dataset
 |   |   |   Beauty                      # Beauty IID dataset
 |   |   ... (other datasets)            # Other IID datasets
-│   optimizer                           # TLatK and other baseline methods
-|   |   optim_QR.py                     # TLatK Loss
+│   optimizer                           # Talos and other baseline methods
+|   |   optim_QR.py                     # Talos Loss
 |   |   ... (other baseline methods)    # Other modules
 |   dataset                             # The dataloader
 |   model                               # The recommendation backbone
@@ -44,5 +44,5 @@ IR-Benchmark-SLatK
 
 We provide automatically conduct hyperparameter tuning with NNI framework. You can run:
 ```
-nnictl create --config ./Config/TLatK.yaml --port [Your Possible Port]
+nnictl create --config ./Config/Talos.yaml --port [Your Possible Port]
 ```
