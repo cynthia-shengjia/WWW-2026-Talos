@@ -1,0 +1,40 @@
+# -------------------------------------------------------------------
+# Copyright (c) 2025 Anonymous Authors of WWW 2026 Submission 3321
+# -------------------------------------------------------------------
+# nnictl create --config ./Config/Talos.yaml --port 8061
+search_space:
+  ssm_temp:
+    _type: choice
+    _value: [ 0.05, 0.1, 0.15, 0.20, 0.25, 0.30  ]
+  lr:
+    _type: choice
+    _value: [ 0.1,0.01, 0.001   ]
+  lr2:
+    _type: choice
+    _value: [ 0.001]
+  weight_decay:
+    _type: choice
+    _value: [  0, 0.000001,0.00000001 ]
+ 
+
+ 
+trial_command: python mainTopKRegression.py  --cuda 6  --mode="single"  --activate_func="sigmoid" --loss='topk_loss_regression'   --datapath='IID_Data_Used'  --dataset='Beauty'  --valid_topks='[20]' --topks='[20]'  --lambda_k=20   --ssm_temp 0.15  --lr 1e-2 --lr2=1e-3   --weight_decay 0  --model=mf --cl_rate=0.01 --cl_temp=0.2 --eps=0.1   --train_batch 1024 --num_negative_items 1024   --layer 2 --enable_dropout 0  --norm_emb 1  --seed 2024
+
+trial_code_directory: ..
+
+
+trialGpuNumber: 1
+
+trial_concurrency: 4
+max_trial_number: 200
+
+tuner:
+  name: TPE
+  class_args:
+    optimize_mode: maximize
+
+training_service:
+  platform: local
+  maxTrialNumberPerGpu: 1
+  useActiveGpu: true
+  gpuIndices: [  0,1,2,3,4,5,6,7 ]
