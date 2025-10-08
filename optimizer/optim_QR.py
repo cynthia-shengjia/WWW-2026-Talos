@@ -3,7 +3,7 @@
 # -------------------------------------------------------------------
 # Module: Model - TLatK Optimizer
 # Description:
-#  This module provides the NeurIPS 2025 submisstion TL@K (Top-K Loss) Optimizer for ItemRec.
+#  This module provides the WWW  2025 submisstion Tolas Optimizer for ItemRec.
 # -------------------------------------------------------------------
 
 from torch import nn

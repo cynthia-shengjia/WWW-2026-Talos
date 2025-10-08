@@ -24,7 +24,7 @@ IR-Benchmark-SLatK
 │   README.md                           # This file
 |   main.py                             # The model training script for SL, BSL, LLPAUC, etc.
 |   mainAdvInfoNCE.py                   # The model training script for AdvInfoNCE.
-|   mainTopKRegression.py               # The model training script for TL@K, and so on.
+|   mainTopKRegression.py               # The model training script for Talos, and so on.
 |   Config                              # The nni auto hyperparameter config
 |   |   TLatK.yaml                      # The hyperparameter tuning framework for TLatK
 │   normal_data                         # Datasets
