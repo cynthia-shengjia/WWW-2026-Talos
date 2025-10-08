@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------
-# Copyright (c) 2025 Anonymous Authors of NeurIPS 2025 Submission 10239
+# Copyright (c) 2025 Anonymous Authors of WWW 2026 Submission 3321
 # -------------------------------------------------------------------
 
 from torch import nn

@@ -1,6 +1,6 @@
 # IR-Benchmark
 
-This repository contains the code for the submission to the NeurIPS 2025.
+This repository contains the code for the submission to the WWW 2026.
 
 
 # Conda Environment

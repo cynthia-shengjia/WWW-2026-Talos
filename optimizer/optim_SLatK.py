@@ -1,9 +1,14 @@
 # -------------------------------------------------------------------
-# Copyright (c) 2025 Anonymous Authors of NeurIPS 2025 Submission 10239
+# Copyright (c) 2025 Anonymous Authors of WWW 2026 Submission 3321
 # -------------------------------------------------------------------
 # Module: Model - TLatK Optimizer
 # Description:
-#  This module provides the NeurIPS 2025 submisstion TL@K (Top-K Loss) Optimizer for ItemRec.
+#  This module provides the SL@K Optimizer for ItemRec.
+#  SL is surrogate for NDCG@K.
+#  Reference:
+#  Yang, Weiqin, et al. 
+#  "Breaking the Top-K Barrier: Advancing Top-K Ranking Metrics Optimization in Recommender Systems." 
+#  Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining V. 2. 2025.
 # -------------------------------------------------------------------
 
 from torch import nn

@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------
-# Copyright (c) 2025 Anonymous Authors of NeurIPS 2025 Submission 10239
+# Copyright (c) 2025 Anonymous Authors of WWW 2026 Submission 3321
 # -------------------------------------------------------------------
 from optimizer.optim_Base import *
 from optimizer.optim_LLPAUC import *
@@ -14,3 +14,4 @@ from optimizer.optim_CVPR import *
 from optimizer.optim_SmoothI import *
 from optimizer.optim_NeurNDCG import *
 from optimizer.optim_SLatK import *
+from optimizer.optim_SLatK_QR import *
