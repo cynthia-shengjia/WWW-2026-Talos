@@ -1,6 +1,6 @@
 # IR-Benchmark
 
-This repository contains the code for the submission to the WWW 2026.
+This repository contains the code for WWW'26 paper "Talos: Optimizing Top-$K$ Accuracy in Recommender Systems"
 
 
 # Conda Environment
